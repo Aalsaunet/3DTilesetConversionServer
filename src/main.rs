@@ -2,6 +2,7 @@ use std::{
     fs,
     io::{prelude::*, BufReader, Read},
     net::{TcpListener, TcpStream},
+    process::Command,
 };
 
 // use error_chain::error_chain;
@@ -36,19 +37,28 @@ fn handle_connection(mut stream: TcpStream) {
         .collect();
     println!("Request from Unity: {:#?}", http_request.first().unwrap());
 
-    // Formulate request to webatlas
-    // let body = reqwest::get("https://www.rust-lang.org")
-    // .await?
-    // .text()
-    // .await?;
-
-    // println!("body = {:?}", body);
-    
-    
+    // Send request to webatlas and parse response
     let mut res = reqwest::blocking::get(NORKART_URL_FULL).unwrap();
     let mut body = String::new();
-    res.read_to_string(&mut body).unwrap();
-    println!("Response from Webatlas:\n{}", body);
+    res.read_to_string(&mut body).unwrap(); 
+    fs::write("tmp/tileset0.json", body).expect("Unable to write file");
+
+    let _ = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(["/C", "npx 3d-tiles-tools upgrade -f -i tmp/tileset0.json -o tmp/tileset1.json"])
+            .output()
+            .expect("Error when upgrading tileset")
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .arg("npx 3d-tiles-tools upgrade -f -i tmp/tileset0.json -o tmp/tileset1.json")
+            .output()
+            .expect("Error when upgrading tileset")
+    };
+    
+    
+    // println!("Response from Webatlas:\n{}", body);
+
 
     // println!("Status: {}", res.status());
     // println!("Headers:\n{:#?}", res.headers());
@@ -103,3 +113,18 @@ fn handle_connection(mut stream: TcpStream) {
 
 //     stream.write_all(response.as_bytes()).unwrap();
 // }
+
+// Command::new("sh")
+    //     .arg("-c")
+    //     .arg("npx 3d-tiles-tools upgrade -f -i tmp/tileset0.json -o tmp/tileset1.json")
+    //     .output()
+    //     .expect("Error when upgrading tileset");
+
+    // Command::new("npx 3d-tiles-tools upgrade")
+    //     .arg("-f")
+    //     .arg("-i")
+    //     .arg("/Users/adr0x/Projects/3DTilesetConversionServer/tmp/tileset0.json")
+    //     .arg("-o")
+    //     .arg("/Users/adr0x/Projects/3DTilesetConversionServer/tmp/tileset1.json")
+    //     .output()
+    //     .expect("Error when upgrading tileset");
