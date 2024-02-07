@@ -1,0 +1,12 @@
+/**
+ * Methods and fragments ported from a legacy version of gltf-pipeline.
+ * (Sorry, no more specific details here...)
+ *
+ * @internal
+ */
+export declare class GltfPipelineLegacy {
+    static process(gltf: any): Promise<void>;
+    private static addCesiumRTC;
+    private static fixBatchIdSemantic;
+}
+//# sourceMappingURL=GltfPipelineLegacy.d.ts.map

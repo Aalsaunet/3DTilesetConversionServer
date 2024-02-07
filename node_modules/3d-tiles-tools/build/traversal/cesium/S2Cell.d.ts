@@ -1,0 +1,42 @@
+/**
+ * Functions related to S2 cells
+ *
+ * @internal
+ */
+export declare class S2Cell {
+    private static readonly S2_MAX_LEVEL;
+    private static readonly S2_POSITION_BITS;
+    private static readonly Mod67BitPosition;
+    /**
+     * Converts a 64-bit S2 cell ID to an S2 cell token.
+     *
+     * @param cellId - The S2 cell ID.
+     * @returns Returns hexadecimal representation of an S2CellId.
+     * @internal
+     */
+    static getTokenFromId: (cellId: bigint) => string;
+    /**
+     * Return the number of trailing zeros in number.
+     * @internal
+     */
+    private static countTrailingZeroBits;
+    /**
+     * Converts an S2 cell token to a 64-bit S2 cell ID.
+     *
+     * @param token - The hexadecimal representation of an S2CellId. Expected to be a valid S2 token.
+     * @returns Returns the S2 cell ID.
+     * @internal
+     */
+    static getIdFromToken: (token: string) => bigint;
+    /**
+     * Creates an S2Cell from its face, position along the Hilbert curve for a given level.
+     *
+     * @param face - The root face of S2 this cell is on. Must be in the range [0-5].
+     * @param position - The position along the Hilbert curve. Must be in the range [0-4**level).
+     * @param level - The level of the S2 curve. Must be in the range [0-30].
+     * @returns A new S2Cell ID from the given parameters.
+     * @internal
+     */
+    static fromFacePositionLevel(face: number, position: bigint, level: number): bigint;
+}
+//# sourceMappingURL=S2Cell.d.ts.map

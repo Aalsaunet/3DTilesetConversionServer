@@ -1,0 +1,14 @@
+/**
+ * An error that indicates that implicit tiling data was structurally
+ * invalid.
+ *
+ * This may be thrown by methods that create the convenience classes
+ * for this package, when the given resources are not valid.
+ *
+ * @internal
+ */
+export declare class ImplicitTilingError extends Error {
+    constructor(message: string);
+    toString: () => string;
+}
+//# sourceMappingURL=ImplicitTilingError.d.ts.map

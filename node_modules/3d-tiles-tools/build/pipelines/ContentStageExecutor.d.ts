@@ -1,0 +1,177 @@
+import { ContentStage } from "./ContentStage";
+import { BasicTilesetProcessor } from "../tilesetProcessing/BasicTilesetProcessor";
+/**
+ * Methods to execute `ContentStage` objects.
+ *
+ * @internal
+ */
+export declare class ContentStageExecutor {
+    /**
+     * Execute the given `ContentStage`.
+     *
+     * @param contentStage - The `ContentStage` object
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws PipelineError If one of the processing steps causes
+     * an error.
+     */
+    static executeContentStage(contentStage: ContentStage, tilesetProcessor: BasicTilesetProcessor): Promise<void>;
+    /**
+     * Execute the given `ContentStage`.
+     *
+     * @param contentStage - The `ContentStage` object
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeContentStageInternal;
+    /**
+     * Performs the 'glbToB3dm' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_GLB`. These entries will be replaced
+     * by entries that contain the B3DM data that was created from the GLB.
+     *
+     * If the entries have names that end in `.glb`, then these
+     * extensions will be changed to `.b3dm`.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeGlbToB3dm;
+    /**
+     * Performs the 'glbToI3dm' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_GLB`. These entries will be replaced
+     * by entries that contain the I3DM data that was created from the GLB.
+     *
+     * If the entries have names that end in `.glb`, then these
+     * extensions will be changed to `.i3dm`.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeGlbToI3dm;
+    /**
+     * Performs the 'b3dmToGlb' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_B3DM`. These entries will be replaced
+     * by entries that contain the GLB data from the B3DM.
+     *
+     * If the entries have names that end in `.b3dm`, then these
+     * extensions will be changed to `.glb`.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeB3dmToGlb;
+    /**
+     * Performs the 'i3dmToGlb' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_I3DM`. These entries will be replaced
+     * by entries that contain the GLB data from the I3DM.
+     *
+     * If the entries have names that end in `.i3dm`, then these
+     * extensions will be changed to `.glb`.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeI3dmToGlb;
+    /**
+     * Performs the 'convertB3dmToGlb' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_B3DM`. These entries will be replaced
+     * by entries that contain GLB data that was created from the B3DM.
+     *
+     * If the entries have names that end in `.b3dm`, then these
+     * extensions will be changed to `.glb`.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeConvertB3dmToGlb;
+    /**
+     * Performs the 'convertPntsToGlb' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_ONTS`. These entries will be replaced
+     * by entries that contain GLB data that was created from the PNTS.
+     *
+     * If the entries have names that end in `.pnts`, then these
+     * extensions will be changed to `.glb`.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeConvertPntsToGlb;
+    /**
+     * Performs the 'optimizeB3dm' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_B3DM`, and apply the `gltf-pipeline`
+     * optimization with the given options to their GLB data.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @param options - The options for `gltf-pipeline`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeOptimizeB3dm;
+    /**
+     * Performs the 'optimizeI3dm' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_I3DM`, and apply the `gltf-pipeline`
+     * optimization with the given options to their GLB data.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @param options - The options for `gltf-pipeline`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeOptimizeI3dm;
+    /**
+     * Performs the 'optimizeGlb' content stage with the given processor.
+     *
+     * This will process all tile contents entries of the source tileset
+     * that have the `CONTENT_TYPE_GLB`, and apply the `gltf-pipeline`
+     * optimization with the given options to them.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @param options - The options for `gltf-pipeline`
+     * @returns A promise that resolves when the process is finished
+     * @throws Error If one of the processing steps causes
+     * an error.
+     */
+    private static executeOptimizeGlb;
+    /**
+     * Performs the 'separateGltf' content stage with the given processor.
+     *
+     * @param tilesetProcessor - The `BasicTilesetProcessor`
+     * @returns A promise that resolves when the process is finished
+     * @throws PipelineError If one of the processing steps causes
+     * an error.
+     */
+    private static executeSeparateGltf;
+}
+//# sourceMappingURL=ContentStageExecutor.d.ts.map

@@ -1,0 +1,39 @@
+import { Pipeline } from "./Pipeline";
+/**
+ * Methods to execute `Pipeline` objects.
+ *
+ * @internal
+ */
+export declare class PipelineExecutor {
+    /**
+     * The directory to store temporary files in.
+     *
+     * If this is `undefined`, then a directory in the
+     * default system temp directory will be used.
+     */
+    private static tempBaseDirectory;
+    /**
+     * Set the directory to store temporary files in.
+     *
+     * If this is `undefined`, then a directory in the
+     * default system temp directory will be used.
+     *
+     * This is primarily intended for testing, demos, and
+     * debugging.
+     *
+     * @param directory - The directory
+     */
+    static setTempBaseDirectory(directory: string | undefined): void;
+    /**
+     * Executes the given `Pipeline`.
+     *
+     * @param pipeline - The `Pipeline` object
+     * @param overwrite - Whether outputs should be overwritten if
+     * they already exist
+     * @returns A promise that resolves when the process is finished
+     * @throws PipelineError If one of the processing steps causes
+     * an error.
+     */
+    static executePipeline(pipeline: Pipeline, overwrite: boolean): Promise<void>;
+}
+//# sourceMappingURL=PipelineExecutor.d.ts.map

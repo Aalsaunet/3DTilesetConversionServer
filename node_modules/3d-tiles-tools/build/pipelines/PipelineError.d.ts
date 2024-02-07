@@ -1,0 +1,12 @@
+/**
+ * An error that may be thrown to indicate that a pipeline
+ * was invalid (for example, due to unknown stage names),
+ * or one of the stages caused an error during execution.
+ *
+ * @internal
+ */
+export declare class PipelineError extends Error {
+    constructor(message: string);
+    toString: () => string;
+}
+//# sourceMappingURL=PipelineError.d.ts.map

@@ -1,0 +1,193 @@
+/**
+ * Utility functions for generic operations on values that
+ * may be numbers or (potentially multi-dimensional) arrays
+ * of numbers.
+ *
+ * These methods are mainly used for performing operations
+ * on metadata values that have been found to be numeric
+ * values (i.e. SCALAR values, VECn or MATn values, or
+ * arrays thereof)
+ *
+ * When two values are involved, then the methods assume
+ * that the values have the same structure, i.e. they are
+ * both numeric/numbers or arrays with the same length. If this
+ * is not the case, then a `MetadataError` will be thrown.
+ *
+ * @internal
+ */
+export declare class ArrayValues {
+    /**
+     * Returns whether the given value is a Numeric scalar
+     * (i.e. number or bigint)
+     *
+     * @param value - The value
+     * @returns Whether the value is Numeric
+     */
+    private static isNumericScalar;
+    /**
+     * Multiplies the given input value with the given factor.
+     *
+     * @param value - The input value
+     * @param factor - The factor
+     * @returns The resulting value
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    static deepMultiply(value: any, factor: any): any;
+    /**
+     * Multiplies the given input value with the given factor.
+     *
+     * @param value - The input value
+     * @param factor - The factor
+     * @returns The resulting value
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    private static deepMultiplyInternal;
+    /**
+     * Adds the given addend to the given input value.
+     *
+     * @param value - The input value
+     * @param addend - The optional addend
+     * @returns The resulting value
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    static deepAdd(value: any, addend: any): any;
+    /**
+     * Adds the given addend to the given input value.
+     *
+     * @param value - The input value
+     * @param addend - The optional addend
+     * @returns The resulting value
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    private static deepAddInternal;
+    /**
+     * Computes the minimum of the given values.
+     *
+     * For arrays, it computes the component-wise minimum.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns The mimimum value
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    static deepMin(a: any, b: any): any;
+    /**
+     * Computes the minimum of the given values.
+     *
+     * For arrays, it computes the component-wise minimum.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns The mimimum value
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    private static deepMinInternal;
+    /**
+     * Computes the maximum of the given values.
+     *
+     * For arrays, it computes the component-wise maximum.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns The maximum value
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    static deepMax(a: any, b: any): any;
+    /**
+     * Computes the maximum of the given values.
+     *
+     * For arrays, it computes the component-wise maximum.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns The maximum value
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    private static deepMaxInternal;
+    /**
+     * Checks whether two values are equal.
+     *
+     * This is only supposed to be used for scalars (number or bigint)
+     * or (potentially multi-dimensional) arrays of scalars.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns Whether the values are equal
+     */
+    static deepEquals(a: any, b: any): boolean;
+    /**
+     * Checks whether two values are equal.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns Whether the values are equal
+     */
+    private static deepEqualsInternal;
+    /**
+     * Returns a deep clone of the given value.
+     *
+     * When the value is an array, then its elements are
+     * deep-cloned. Otherwise, the value itself is returned.
+     *
+     * @param value - The input value
+     * @returns The result value
+     */
+    static deepClone(value: any): any;
+    /**
+     * Returns whether one value is less than another.
+     *
+     * It returns whether the first value is smaller than
+     * the second value. For arrays, it recursively checks
+     * whether ANY element of the first array is smaller
+     * than the corresponding element of the second array.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns Whether the first value is less than the second
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    static anyDeepLessThan(a: any, b: any): boolean;
+    /**
+     * Returns whether one value is less than another.
+     *
+     * It returns whether the first value is smaller than
+     * the second value. For arrays, it recursively checks
+     * whether ANY element of the first array is smaller
+     * than the corresponding element of the second array.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns Whether the first value is less than the second
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    private static anyDeepLessThanInternal;
+    /**
+     * Returns whether one value is greater than another.
+     *
+     * It returns whether the first value is greater than
+     * the second value. For arrays, it recursively checks
+     * whether ANY element of the first array is greater
+     * than the corresponding element of the second array.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns Whether the first value is greater than the second
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    static anyDeepGreaterThan(a: any, b: any): boolean;
+    /**
+     * Returns whether one value is greater than another.
+     *
+     * It returns whether the first value is greater than
+     * the second value. For arrays, it recursively checks
+     * whether ANY element of the first array is greater
+     * than the corresponding element of the second array.
+     *
+     * @param a - The first value
+     * @param b - The second value
+     * @returns Whether the first value is greater than the second
+     * @throws MetadataError If the parameters have incompatible types
+     */
+    private static anyDeepGreaterThanInternal;
+}
+//# sourceMappingURL=ArrayValues.d.ts.map

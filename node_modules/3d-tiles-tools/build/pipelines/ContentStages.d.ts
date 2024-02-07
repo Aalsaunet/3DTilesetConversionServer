@@ -1,0 +1,117 @@
+import { ContentStage } from "./ContentStage";
+/**
+ * Methods to create `ContentStage` objects
+ *
+ * @internal
+ */
+export declare class ContentStages {
+    /**
+     * The `name` that identifies the "glbToB3dm" content stage
+     */
+    static readonly CONTENT_STAGE_GLB_TO_B3DM = "glbToB3dm";
+    /**
+     * The `name` that identifies the "glbToI3dm" content stage
+     */
+    static readonly CONTENT_STAGE_GLB_TO_I3DM = "glbToI3dm";
+    /**
+     * The `name` that identifies the "b3dmToGlb" content stage
+     */
+    static readonly CONTENT_STAGE_B3DM_TO_GLB = "b3dmToGlb";
+    /**
+     * The `name` that identifies the "convertB3dmToGlb" content stage
+     */
+    static readonly CONTENT_STAGE_CONVERT_B3DM_TO_GLB = "convertB3dmToGlb";
+    /**
+     * The `name` that identifies the "convertB3dmToGlb" content stage
+     */
+    static readonly CONTENT_STAGE_CONVERT_PNTS_TO_GLB = "convertPntsToGlb";
+    /**
+     * The `name` that identifies the "i3dmToGlb" content stage
+     */
+    static readonly CONTENT_STAGE_I3DM_TO_GLB = "i3dmToGlb";
+    /**
+     * The `name` that identifies the "optimizeB3dm" content stage
+     */
+    static readonly CONTENT_STAGE_OPTIMIZE_B3DM = "optimizeB3dm";
+    /**
+     * The `name` that identifies the "optimizeI3dm" content stage
+     */
+    static readonly CONTENT_STAGE_OPTIMIZE_I3DM = "optimizeI3dm";
+    /**
+     * The `name` that identifies the "optimizeGlb" content stage
+     */
+    static readonly CONTENT_STAGE_OPTIMIZE_GLB = "optimizeGlb";
+    /**
+     * The `name` that identifies the "separateGltf" content stage
+     */
+    static readonly CONTENT_STAGE_SEPARATE_GLTF = "separateGltf";
+    /**
+     * Creates a content stage that performs the "glbToB3dm" operation
+     *
+     * @returns The content stage
+     */
+    static createGlbToB3dm(): ContentStage;
+    /**
+     * Creates a content stage that performs the "glbToI3dm" operation
+     *
+     * @returns The content stage
+     */
+    static createGlbToI3dm(): ContentStage;
+    /**
+     * Creates a content stage that performs the "b3dmToGlb" operation
+     *
+     * @returns The content stage
+     */
+    static createB3dmToGlb(): ContentStage;
+    /**
+     * Creates a content stage that performs the "convertB3dmToGlb" operation
+     *
+     * @returns The content stage
+     */
+    static createConvertB3dmToGlb(): ContentStage;
+    /**
+     * Creates a content stage that performs the "convertB3dmToGlb" operation
+     *
+     * @returns The content stage
+     */
+    static createConvertPntsToGlb(): ContentStage;
+    /**
+     * Creates a content stage that performs the "i3dmToGlb" operation
+     *
+     * @returns The content stage
+     */
+    static createI3dmToGlb(): ContentStage;
+    /**
+     * Creates a content stage that performs the "optimizeGlb" operation
+     *
+     * @returns The content stage
+     */
+    static createOptimizeB3dm(options: any): ContentStage;
+    /**
+     * Creates a content stage that performs the "optimizeI3dm" operation
+     *
+     * @returns The content stage
+     */
+    static createOptimizeI3dm(options: any): ContentStage;
+    /**
+     * Creates a content stage that performs the "optimizeGlb" operation
+     *
+     * @returns The content stage
+     */
+    static createOptimizeGlb(options: any): ContentStage;
+    /**
+     * Creates a content stage that performs the "separateGlb" operation
+     *
+     * @returns The content stage
+     */
+    static createSeparateGltf(): ContentStage;
+    /**
+     * Creates a `ContentStage` object from the given (untyped) JSON.
+     *
+     * @param contentStageJson - The JSON object
+     * @returns The `ContentStage` object
+     * @throws DeveloperError When the input was not valid
+     */
+    static createContentStage(contentStageJson: any): ContentStage;
+}
+//# sourceMappingURL=ContentStages.d.ts.map

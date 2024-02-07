@@ -1,0 +1,13 @@
+/**
+ * An error that indicates that metadata was structurally invalid.
+ *
+ * This may be thrown by methods that create the convenience classes
+ * for this package, when the given inputs are not valid.
+ *
+ * @internal
+ */
+export declare class MetadataError extends Error {
+    constructor(message: string);
+    toString: () => string;
+}
+//# sourceMappingURL=MetadataError.d.ts.map

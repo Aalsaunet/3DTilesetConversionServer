@@ -1,0 +1,12 @@
+/**
+ * An error that may be thrown to indicate that tile data
+ * was invalid in some way, with the error mesage hopefully
+ * containing some helpful details.
+ *
+ * @internal
+ */
+export declare class TileFormatError extends Error {
+    constructor(message: string);
+    toString: () => string;
+}
+//# sourceMappingURL=TileFormatError.d.ts.map

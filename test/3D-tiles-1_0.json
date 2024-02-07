@@ -1,740 +1,700 @@
 {
-  "asset" : { "version": "1.0" },
-  "root":
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "000tileset.json"
+  "asset": {
+    "version": "1.0"
   },
+  "root": {
+    "refine": "ADD",
+    "children": [
+      {
+        "refine": "ADD",
+        "children": [
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "000tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.084853857,
+                    1.0119764,
+                    0.12942899,
+                    1.0379088,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 882.96997
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "001tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.12441688,
+                    1.0117255,
+                    0.17221653,
+                    1.0404484,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 385.70499
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "002tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.080082519,
+                    1.035843,
+                    0.12298934,
+                    1.0675668,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 893.875
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "003tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.11642549,
+                    1.0381883,
+                    0.17048939,
+                    1.070063,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 884.83002
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.080082519,
+                1.0117255,
+                0.17221653,
+                1.070063,
+                -500,
+                9000
+              ]
+            },
+            "geometricError": 893.875
+          },
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "010tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.17050563,
+                    1.0276138,
+                    0.20709921,
+                    1.0416211,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 509.54501
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "012tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.16596998,
+                    1.0404515,
+                    0.21708252,
+                    1.0715781,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 933.02002
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "013tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.21531333,
+                    1.0482816,
+                    0.22400307,
+                    1.0716995,
+                    -953.125,
+                    1541.435
+                  ]
+                },
+                "geometricError": 205.89999
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.16596998,
+                1.0276138,
+                0.22400307,
+                1.0716995,
+                -953.125,
+                9000
+              ]
+            },
+            "geometricError": 933.02002
+          },
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "020tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.078702298,
+                    1.0651348,
+                    0.11617856,
+                    1.0942474,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 556.505
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "021tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.10885808,
+                    1.0677685,
+                    0.16555532,
+                    1.0996384,
+                    -565.496,
+                    9000
+                  ]
+                },
+                "geometricError": 630.19
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "023tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.11889352,
+                    1.0976731,
+                    0.15995524,
+                    1.1159112,
+                    -582.624,
+                    9000
+                  ]
+                },
+                "geometricError": 636.80499
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.078702298,
+                1.0651348,
+                0.16555532,
+                1.1159112,
+                -582.624,
+                9000
+              ]
+            },
+            "geometricError": 636.80499
+          },
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "030tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.16060478,
+                    1.0699876,
+                    0.2151916,
+                    1.101205,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 541.88501
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "031tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.21260439,
+                    1.0715918,
+                    0.22226449,
+                    1.0993399,
+                    -391.59,
+                    1871.175
+                  ]
+                },
+                "geometricError": 19.389999
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "032tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.15764262,
+                    1.0997628,
+                    0.21158028,
+                    1.130999,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 509.97
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "033tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.20951128,
+                    1.1090011,
+                    0.24832063,
+                    1.1314715,
+                    -606.085,
+                    1663.645
+                  ]
+                },
+                "geometricError": 277.215
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.15764262,
+                1.0699876,
+                0.24832063,
+                1.1314715,
+                -606.085,
+                9000
+              ]
+            },
+            "geometricError": 541.88501
+          }
+        ],
+        "boundingVolume": {
+          "region": [
+            0.078702298,
+            1.0117255,
+            0.24832063,
+            1.1314715,
+            -953.125,
+            9000
+          ]
+        },
+        "geometricError": 933.02002
+      },
+      {
+        "refine": "ADD",
+        "children": [
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "210tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.18397283,
+                    1.1305238,
+                    0.20921856,
+                    1.1525562,
+                    -487.2175,
+                    836.67
+                  ]
+                },
+                "geometricError": 359.035
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "211tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.20755666,
+                    1.1311092,
+                    0.26572176,
+                    1.1612303,
+                    -711.756,
+                    9000
+                  ]
+                },
+                "geometricError": 571.53003
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "213tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.20719459,
+                    1.1609872,
+                    0.26597321,
+                    1.1910827,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 398.67999
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.18397283,
+                1.1305238,
+                0.26597321,
+                1.1910827,
+                -711.756,
+                9000
+              ]
+            },
+            "geometricError": 571.53003
+          },
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "231tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.23658415,
+                    1.190961,
+                    0.2664191,
+                    1.2054377,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 479.26999
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.23658415,
+                1.190961,
+                0.2664191,
+                1.2054377,
+                -500,
+                9000
+              ]
+            },
+            "geometricError": 479.26999
+          }
+        ],
+        "boundingVolume": {
+          "region": [
+            0.18397283,
+            1.1305238,
+            0.2664191,
+            1.2054377,
+            -711.756,
+            9000
+          ]
+        },
+        "geometricError": 571.53003
+      },
+      {
+        "refine": "ADD",
+        "children": [
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "300tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.26571414,
+                    1.1572907,
+                    0.26816577,
+                    1.1613217,
+                    448.612,
+                    787.25
+                  ]
+                },
+                "geometricError": 19.815001
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "302tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.26579993,
+                    1.1613215,
+                    0.31640967,
+                    1.1910138,
+                    -476.9025,
+                    2051.025
+                  ]
+                },
+                "geometricError": 113.725
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.26571414,
+                1.1572907,
+                0.31640967,
+                1.1910138,
+                -476.9025,
+                2051.025
+              ]
+            },
+            "geometricError": 113.725
+          },
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "320tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.26600199,
+                    1.1906502,
+                    0.3354492,
+                    1.220081,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 4422.71
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "321tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.33163503,
+                    1.1935293,
+                    0.40143861,
+                    1.2198461,
+                    -418.39325,
+                    1409.2725
+                  ]
+                },
+                "geometricError": 236.175
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "322tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.32227161,
+                    1.2200808,
+                    0.33628107,
+                    1.2262003,
+                    -500,
+                    9000
+                  ]
+                },
+                "geometricError": 12.615
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "323tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.33596198,
+                    1.2175881,
+                    0.41019954,
+                    1.2367952,
+                    -476.5625,
+                    916.68
+                  ]
+                },
+                "geometricError": 408.185
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.26600199,
+                1.1906502,
+                0.41019954,
+                1.2367952,
+                -500,
+                9000
+              ]
+            },
+            "geometricError": 4422.71
+          },
+          {
+            "refine": "ADD",
+            "children": [
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "330tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.39907616,
+                    1.1977493,
+                    0.4531561,
+                    1.2174103,
+                    -654.585,
+                    706.7445
+                  ]
+                },
+                "geometricError": 70.980003
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "331tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.50268423,
+                    1.2054896,
+                    0.51626176,
+                    1.2105503,
+                    -425.3615,
+                    607.3975
+                  ]
+                },
+                "geometricError": 12.22
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "332tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.40512228,
+                    1.2148307,
+                    0.48848187,
+                    1.2422321,
+                    -443.516,
+                    879.43
+                  ]
+                },
+                "geometricError": 313.98999
+              },
+              {
+                "refine": "ADD",
+                "content": {
+                  "uri": "333tileset.json"
+                },
+                "boundingVolume": {
+                  "region": [
+                    0.47640719,
+                    1.2101108,
+                    0.54380811,
+                    1.2408082,
+                    -840.798,
+                    9000
+                  ]
+                },
+                "geometricError": 149.645
+              }
+            ],
+            "boundingVolume": {
+              "region": [
+                0.39907616,
+                1.1977493,
+                0.54380811,
+                1.2422321,
+                -840.798,
+                9000
+              ]
+            },
+            "geometricError": 313.98999
+          }
+        ],
+        "boundingVolume": {
+          "region": [
+            0.26571414,
+            1.1572907,
+            0.54380811,
+            1.2422321,
+            -840.798,
+            9000
+          ]
+        },
+        "geometricError": 4422.71
+      }
+    ],
     "boundingVolume": {
       "region": [
-0.084853857,
-1.0119764,
-0.12942899,
-1.0379088,
--500,
-9000
-]
+        0.078702298,
+        1.0117255,
+        0.54380811,
+        1.2422321,
+        -953.125,
+        9000
+      ]
     },
-  "geometricError": 882.96997
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "001tileset.json"
+    "geometricError": 4422.71
   },
-    "boundingVolume": {
-      "region": [
-0.12441688,
-1.0117255,
-0.17221653,
-1.0404484,
--500,
-9000
-]
-    },
-  "geometricError": 385.70499
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "002tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.080082519,
-1.035843,
-0.12298934,
-1.0675668,
--500,
-9000
-]
-    },
-  "geometricError": 893.875
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "003tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.11642549,
-1.0381883,
-0.17048939,
-1.070063,
--500,
-9000
-]
-    },
-  "geometricError": 884.83002
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.080082519,
-1.0117255,
-0.17221653,
-1.070063,
--500,
-9000
-]
-    },
-  "geometricError": 893.875
-}
-,
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "010tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.17050563,
-1.0276138,
-0.20709921,
-1.0416211,
--500,
-9000
-]
-    },
-  "geometricError": 509.54501
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "012tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.16596998,
-1.0404515,
-0.21708252,
-1.0715781,
--500,
-9000
-]
-    },
-  "geometricError": 933.02002
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "013tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.21531333,
-1.0482816,
-0.22400307,
-1.0716995,
--953.125,
-1541.435
-]
-    },
-  "geometricError": 205.89999
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.16596998,
-1.0276138,
-0.22400307,
-1.0716995,
--953.125,
-9000
-]
-    },
-  "geometricError": 933.02002
-}
-,
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "020tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.078702298,
-1.0651348,
-0.11617856,
-1.0942474,
--500,
-9000
-]
-    },
-  "geometricError": 556.505
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "021tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.10885808,
-1.0677685,
-0.16555532,
-1.0996384,
--565.496,
-9000
-]
-    },
-  "geometricError": 630.19
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "023tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.11889352,
-1.0976731,
-0.15995524,
-1.1159112,
--582.624,
-9000
-]
-    },
-  "geometricError": 636.80499
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.078702298,
-1.0651348,
-0.16555532,
-1.1159112,
--582.624,
-9000
-]
-    },
-  "geometricError": 636.80499
-}
-,
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "030tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.16060478,
-1.0699876,
-0.2151916,
-1.101205,
--500,
-9000
-]
-    },
-  "geometricError": 541.88501
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "031tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.21260439,
-1.0715918,
-0.22226449,
-1.0993399,
--391.59,
-1871.175
-]
-    },
-  "geometricError": 19.389999
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "032tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.15764262,
-1.0997628,
-0.21158028,
-1.130999,
--500,
-9000
-]
-    },
-  "geometricError": 509.97
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "033tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.20951128,
-1.1090011,
-0.24832063,
-1.1314715,
--606.085,
-1663.645
-]
-    },
-  "geometricError": 277.215
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.15764262,
-1.0699876,
-0.24832063,
-1.1314715,
--606.085,
-9000
-]
-    },
-  "geometricError": 541.88501
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.078702298,
-1.0117255,
-0.24832063,
-1.1314715,
--953.125,
-9000
-]
-    },
-  "geometricError": 933.02002
-}
-,
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "210tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.18397283,
-1.1305238,
-0.20921856,
-1.1525562,
--487.2175,
-836.67
-]
-    },
-  "geometricError": 359.035
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "211tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.20755666,
-1.1311092,
-0.26572176,
-1.1612303,
--711.756,
-9000
-]
-    },
-  "geometricError": 571.53003
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "213tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.20719459,
-1.1609872,
-0.26597321,
-1.1910827,
--500,
-9000
-]
-    },
-  "geometricError": 398.67999
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.18397283,
-1.1305238,
-0.26597321,
-1.1910827,
--711.756,
-9000
-]
-    },
-  "geometricError": 571.53003
-}
-,
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "231tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.23658415,
-1.190961,
-0.2664191,
-1.2054377,
--500,
-9000
-]
-    },
-  "geometricError": 479.26999
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.23658415,
-1.190961,
-0.2664191,
-1.2054377,
--500,
-9000
-]
-    },
-  "geometricError": 479.26999
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.18397283,
-1.1305238,
-0.2664191,
-1.2054377,
--711.756,
-9000
-]
-    },
-  "geometricError": 571.53003
-}
-,
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "300tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.26571414,
-1.1572907,
-0.26816577,
-1.1613217,
-448.612,
-787.25
-]
-    },
-  "geometricError": 19.815001
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "302tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.26579993,
-1.1613215,
-0.31640967,
-1.1910138,
--476.9025,
-2051.025
-]
-    },
-  "geometricError": 113.725
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.26571414,
-1.1572907,
-0.31640967,
-1.1910138,
--476.9025,
-2051.025
-]
-    },
-  "geometricError": 113.725
-}
-,
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "320tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.26600199,
-1.1906502,
-0.3354492,
-1.220081,
--500,
-9000
-]
-    },
-  "geometricError": 4422.71
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "321tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.33163503,
-1.1935293,
-0.40143861,
-1.2198461,
--418.39325,
-1409.2725
-]
-    },
-  "geometricError": 236.175
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "322tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.32227161,
-1.2200808,
-0.33628107,
-1.2262003,
--500,
-9000
-]
-    },
-  "geometricError": 12.615
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "323tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.33596198,
-1.2175881,
-0.41019954,
-1.2367952,
--476.5625,
-916.68
-]
-    },
-  "geometricError": 408.185
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.26600199,
-1.1906502,
-0.41019954,
-1.2367952,
--500,
-9000
-]
-    },
-  "geometricError": 4422.71
-}
-,
-{
-  "refine": "ADD",
-  "children": [
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "330tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.39907616,
-1.1977493,
-0.4531561,
-1.2174103,
--654.585,
-706.7445
-]
-    },
-  "geometricError": 70.980003
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "331tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.50268423,
-1.2054896,
-0.51626176,
-1.2105503,
--425.3615,
-607.3975
-]
-    },
-  "geometricError": 12.22
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "332tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.40512228,
-1.2148307,
-0.48848187,
-1.2422321,
--443.516,
-879.43
-]
-    },
-  "geometricError": 313.98999
-}
-,
-{
-  "refine": "ADD",
-  "content": {
-    "uri": "333tileset.json"
-  },
-    "boundingVolume": {
-      "region": [
-0.47640719,
-1.2101108,
-0.54380811,
-1.2408082,
--840.798,
-9000
-]
-    },
-  "geometricError": 149.645
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.39907616,
-1.1977493,
-0.54380811,
-1.2422321,
--840.798,
-9000
-]
-    },
-  "geometricError": 313.98999
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.26571414,
-1.1572907,
-0.54380811,
-1.2422321,
--840.798,
-9000
-]
-    },
-  "geometricError": 4422.71
-}
-
-],
-    "boundingVolume": {
-      "region": [
-0.078702298,
-1.0117255,
-0.54380811,
-1.2422321,
--953.125,
-9000
-]
-    },
-  "geometricError": 4422.71
-}
-,
   "boundingVolume": {
     "region": [
-0.078702298,
-1.0117255,
-0.54380811,
-1.2422321,
--953.125,
-9000
-]
+      0.078702298,
+      1.0117255,
+      0.54380811,
+      1.2422321,
+      -953.125,
+      9000
+    ]
   },
   "geometricError": 4422.71
 }

@@ -1,0 +1,10 @@
+/**
+ * An error that indicates that binary data was structurally invalid.
+ *
+ * @internal
+ */
+export declare class BinaryDataError extends Error {
+    constructor(message: string);
+    toString: () => string;
+}
+//# sourceMappingURL=BinaryDataError.d.ts.map

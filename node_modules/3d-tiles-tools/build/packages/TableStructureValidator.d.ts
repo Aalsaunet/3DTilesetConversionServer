@@ -1,0 +1,43 @@
+import { Database } from "better-sqlite3";
+/**
+ * A simple type describing the structure of a database
+ * table, consisting of the table name, and the names
+ * and types of the columns.
+ *
+ * @internal
+ */
+export type TableStructure = {
+    /**
+     * The name of the table
+     */
+    name: string;
+    /**
+     * The columns structure.
+     *
+     * Each column consists of a name, and the type, like
+     * 'TEXT' or 'BLOB'.
+     */
+    columns: {
+        name: string;
+        type: string;
+    }[];
+};
+/**
+ * A class that can validate that a (better-sqlite3) Database
+ * has a certain structure.
+ *
+ * @internal
+ */
+export declare class TableStructureValidator {
+    /**
+     * Validates that the given database has a table with the
+     * given structure.
+     *
+     * @param db - The database
+     * @param tableStructure - The table structure
+     * @returns An (unspecified, but elaborate) error message,
+     * or `undefined` if the structure is valid
+     */
+    static validate(db: Database, tableStructure: TableStructure): string | undefined;
+}
+//# sourceMappingURL=TableStructureValidator.d.ts.map

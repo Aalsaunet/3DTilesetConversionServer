@@ -1,0 +1,33 @@
+import { QuadtreeCoordinates } from "./QuadtreeCoordinates";
+/**
+ * Methods related to quadtrees.
+ *
+ * @internal
+ */
+export declare class Quadtrees {
+    /**
+     * Computes the number of nodes of a quadtree with the given number of
+     * levels.
+     *
+     * @param levels - The number of levels
+     * @returns The number of nodes
+     */
+    static computeNumberOfNodesForLevels(levels: number): number;
+    /**
+     * Returns a generator over all coordinates in the given level.
+     *
+     * @param level - The level
+     * @returns The coordinates
+     */
+    static coordinatesForLevel(level: number): Generator<QuadtreeCoordinates, void, unknown>;
+    /**
+     * Returns whether the given coordinates are valid. This means
+     * that the x and y components are in the range that is
+     * determined by the level of the coordinates.
+     *
+     * @param c - The coordinates
+     * @returns Whether the coordinates are valid
+     */
+    static isValid(c: QuadtreeCoordinates): boolean;
+}
+//# sourceMappingURL=Quadtrees.d.ts.map

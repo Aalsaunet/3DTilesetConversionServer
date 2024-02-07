@@ -1,0 +1,11 @@
+/**
+ * An error that may be thrown to indicate that a tileset
+ * was invalid and could not be processed.
+ *
+ * @internal
+ */
+export declare class TilesetError extends Error {
+    constructor(message: string);
+    toString: () => string;
+}
+//# sourceMappingURL=TilesetError.d.ts.map

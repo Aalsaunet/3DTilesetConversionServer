@@ -1,0 +1,27 @@
+/**
+ * Utility methods related to URI strings.
+ *
+ * TODO This could probably be replaced with an NPM library
+ * for URI handling. The billion dollar question: Which one?
+ *
+ * @internal
+ */
+export declare class Uris {
+    /**
+     * Returns whether the given URI is a data URI
+     *
+     * @param uri - The URI
+     * @returns Whether the URI is a data URI
+     */
+    static isDataUri(uri: string): boolean;
+    /**
+     * Returns whether the given URI is an absolute URI.
+     *
+     * This does not handle the case of absolute file URIs.
+     *
+     * @param uri - The URI
+     * @returns Whether the URI is absolute
+     */
+    static isAbsoluteUri(uri: string): boolean;
+}
+//# sourceMappingURL=Uris.d.ts.map

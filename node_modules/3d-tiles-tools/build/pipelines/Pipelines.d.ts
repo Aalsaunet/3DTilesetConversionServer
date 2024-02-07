@@ -1,0 +1,17 @@
+import { Pipeline } from "./Pipeline";
+/**
+ * Methods to create `Pipeline` objects from JSON input.
+ *
+ * @internal
+ */
+export declare class Pipelines {
+    /**
+     * Creates a `Pipeline` object from the given (untyped) JSON.
+     *
+     * @param pipelineJson - The JSON object
+     * @returns The `Pipeline` object
+     * @throws DeveloperError When the input was not valid
+     */
+    static createPipeline(pipelineJson: any): Pipeline;
+}
+//# sourceMappingURL=Pipelines.d.ts.map

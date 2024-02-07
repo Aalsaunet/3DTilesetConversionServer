@@ -1,0 +1,11 @@
+/**
+ * An error that may be thrown to indicate that an invalid
+ * operation was performed, caused by a wrong API usage.
+ *
+ * @internal
+ */
+export declare class DeveloperError extends Error {
+    constructor(message: string);
+    toString: () => string;
+}
+//# sourceMappingURL=DeveloperError.d.ts.map

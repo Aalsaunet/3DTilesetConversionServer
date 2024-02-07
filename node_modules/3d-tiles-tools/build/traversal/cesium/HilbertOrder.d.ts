@@ -1,0 +1,30 @@
+/**
+ * Hilbert Order helper functions.
+ *
+ * @internal
+ */
+export declare class HilbertOrder {
+    /**
+     * Computes the Hilbert index at the given level from 2D coordinates.
+     *
+     * @param level - The level of the curve
+     * @param x - The X coordinate
+     * @param y - The Y coordinate
+     * @returns  The Hilbert index.
+     */
+    static encode2D(level: number, x: number, y: number): bigint;
+    /**
+     * Computes the 2D coordinates from the Hilbert index at the given level.
+     *
+     * @param level - The level of the curve
+     * @param index - The Hilbert index
+     * @returns An array containing the 2D coordinates ([x, y]) corresponding to the Morton index.
+     * @internal
+     */
+    static decode2D(level: number, index: bigint): number[];
+    /**
+     * @internal
+     */
+    private static rotate;
+}
+//# sourceMappingURL=HilbertOrder.d.ts.map

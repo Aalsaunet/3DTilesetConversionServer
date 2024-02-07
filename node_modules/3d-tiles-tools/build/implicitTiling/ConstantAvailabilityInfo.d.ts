@@ -1,0 +1,16 @@
+import { AvailabilityInfo } from "./AvailabilityInfo";
+/**
+ * Implementation of an `AvailabilityInfo` that has a constant value.
+ *
+ * @internal
+ */
+export declare class ConstantAvailabilityInfo implements AvailabilityInfo {
+    private readonly _available;
+    private readonly _length;
+    constructor(available: boolean, length: number);
+    /** {@inheritDoc AvailabilityInfo.length} */
+    get length(): number;
+    /** {@inheritDoc AvailabilityInfo.isAvailable} */
+    isAvailable(index: number): boolean;
+}
+//# sourceMappingURL=ConstantAvailabilityInfo.d.ts.map

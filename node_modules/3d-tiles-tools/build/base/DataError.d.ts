@@ -1,0 +1,17 @@
+/**
+ * An error that may be thrown to indicate that input
+ * data was invalid.
+ *
+ * This may refer to buffers that have been expected to
+ * contain a certain type of data, but did not. For
+ * example, a buffer that looked like a GZIpped buffer,
+ * but turned out to be invalid, or a buffer that
+ * looked like it contained valid JSON, but did not.
+ *
+ * @internal
+ */
+export declare class DataError extends Error {
+    constructor(message: string);
+    toString: () => string;
+}
+//# sourceMappingURL=DataError.d.ts.map

@@ -1,0 +1,61 @@
+/**
+ * Morton Order (aka Z-Order Curve) helper functions.
+ * @see {@link https://en.wikipedia.org/wiki/Z-order_curve}
+ *
+ * @internal
+ */
+export declare class MortonOrder {
+    /**
+     * Inserts one 0 bit of spacing between a number's bits. This is the opposite of removeOneSpacing.
+     *
+     * Example:
+     *  input: 6
+     *  input (binary):  110
+     *  output (binary): 10100
+     *                    ^ ^ (added)
+     *  output: 20
+     *
+     * @param v - A 16-bit unsigned integer.
+     * @returns A 32-bit unsigned integer.
+     * @see {@link https://fgiesen.wordpress.com/2009/12/13/decoding-morton-codes/}
+     */
+    private static insertOneSpacing;
+    /**
+     * Inserts two 0 bits of spacing between a number's bits. This is the opposite of removeTwoSpacing.
+     *
+     * Example:
+     *  input: 6
+     *  input (binary):  110
+     *  output (binary): 1001000
+     *                    ^^ ^^ (added)
+     *  output: 72
+     *
+     * @internal
+     * @param v - A 10-bit unsigned integer.
+     * @returns A 30-bit unsigned integer.
+     * @see {@link https://fgiesen.wordpress.com/2009/12/13/decoding-morton-codes/}
+     */
+    private static insertTwoSpacing;
+    /**
+     * Computes the Morton index from 2D coordinates. This is equivalent to interleaving their bits.
+     * The inputs must be 16-bit unsigned integers (resulting in 32-bit Morton index) due to 32-bit bitwise operator limitation in JavaScript.
+     *
+     * @param x - The X coordinate in the range [0, (2^16)-1].
+     * @param y - The Y coordinate in the range [0, (2^16)-1].
+     * @returns The Morton index.
+     * @internal
+     */
+    static encode2D(x: number, y: number): number;
+    /**
+     * Computes the Morton index from 3D coordinates. This is equivalent to interleaving their bits.
+     * The inputs must be 10-bit unsigned integers (resulting in 30-bit Morton index) due to 32-bit bitwise operator limitation in JavaScript.
+     *
+     * @param x - The X coordinate in the range [0, (2^10)-1].
+     * @param y - The Y coordinate in the range [0, (2^10)-1].
+     * @param z - The Z coordinate in the range [0, (2^10)-1].
+     * @returns The Morton index.
+     * @internal
+     */
+    static encode3D(x: number, y: number, z: number): number;
+}
+//# sourceMappingURL=MortonOrder.d.ts.map
