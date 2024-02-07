@@ -28,6 +28,10 @@ fn main() {
 }
 
 fn handle_connection(mut stream: TcpStream) {
+    // Make required directories if they don't already exits
+    fs::create_dir_all("tmp/1_0").unwrap();
+    fs::create_dir_all("tmp/1_1").unwrap();
+    
     // Parse received request
     let buf_reader = BufReader::new(&mut stream);
     let http_request: Vec<_> = buf_reader
@@ -35,30 +39,31 @@ fn handle_connection(mut stream: TcpStream) {
         .map(|result| result.unwrap())
         .take_while(|line| !line.is_empty())
         .collect();
-    println!("Request from Unity: {:#?}", http_request.first().unwrap());
+    
+    println!("Request from Unity: {:#?}", http_request);
 
     // Send request to webatlas and parse response
     let mut res = reqwest::blocking::get(NORKART_URL_FULL).unwrap();
     let mut body = String::new();
     res.read_to_string(&mut body).unwrap(); 
-    fs::write("tmp/tileset0.json", body).expect("Unable to write file");
+    fs::write("tmp/1_0/tileset.json", body).expect("Unable to write file");
 
     let _ = if cfg!(target_os = "windows") {
         Command::new("cmd")
-            .args(["/C", "npx 3d-tiles-tools upgrade -f -i tmp/tileset0.json -o tmp/tileset1.json"])
+            .args(["/C", "npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json"])
             .output()
             .expect("Error when upgrading tileset")
     } else {
         Command::new("sh")
             .arg("-c")
-            .arg("npx 3d-tiles-tools upgrade -f -i tmp/tileset0.json -o tmp/tileset1.json")
+            .arg("npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json")
             .output()
             .expect("Error when upgrading tileset")
     };
     
     // Create response back to the CesiumForUnity plugin
     let status_line = "HTTP/1.1 200 OK";
-    let contents = fs::read_to_string("tmp/tileset1.json").expect("Unable to read file");
+    let contents = fs::read_to_string("tmp/1_1/tileset.json").expect("Unable to read file");
     let length = contents.len();
 
     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
