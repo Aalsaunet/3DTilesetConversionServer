@@ -3,6 +3,7 @@ use std::{
     io::{prelude::*, BufReader, Read},
     net::{TcpListener, TcpStream},
     process::Command,
+    path::Path
 };
 use regex::Regex;
 
@@ -82,10 +83,18 @@ fn resolve_child_tilesets(result: String) {
     let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
     let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
     for m in matches.iter() {
-        let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
-        let result = request_tileset(&url); 
-        fs::write(format!("tmp/1_0/{}", m), &result).expect("Unable to write file");
-        resolve_child_tilesets(result);
+        let path = "tmp/1_0/".to_string() + m;
+        if !Path::new(&path).exists() {
+            println!("Sending request for {}", m);
+            let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
+            let result = request_tileset(&url); 
+            fs::write(format!("tmp/1_0/{}", m), &result).expect("Unable to write file");
+            resolve_child_tilesets(result);
+        } else {
+            println!("{} already cached locally.", m);
+            let result = fs::read_to_string(path).expect("Unable to read file");
+            resolve_child_tilesets(result);
+        }    
     }
 }
 
