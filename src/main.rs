@@ -49,6 +49,7 @@ fn handle_connection(mut stream: TcpStream) {
 
     // Find all references tilesets
     resolve_child_tilesets(result);
+    println!("Fetched all 3DTiles-1.0 tilesets");
 
     // Convert from 3DTiles-1.0 to 3DTiles-1.1
     let _ = if cfg!(target_os = "windows") {
@@ -63,6 +64,7 @@ fn handle_connection(mut stream: TcpStream) {
             .output()
             .expect("Error when upgrading tileset")
     };
+    println!("Converted all 3DTiles-1.0 tilesets into the 1.1 format");
     
     // Create response back to the CesiumForUnity plugin
     let status_line = "HTTP/1.1 200 OK";
@@ -73,7 +75,6 @@ fn handle_connection(mut stream: TcpStream) {
         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
         stream.write_all(response.as_bytes()).unwrap();
     }  
-
     println!("Sent all tilesets to Unity");
 }
 
@@ -81,10 +82,10 @@ fn resolve_child_tilesets(result: String) {
     let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
     let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
     for m in matches.iter() {
-        //println!("Found: {}", m);
         let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
         let result = request_tileset(&url); 
         fs::write(format!("tmp/1_0/{}", m), &result).expect("Unable to write file");
+        resolve_child_tilesets(result);
     }
 }
 
