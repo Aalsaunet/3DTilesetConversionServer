@@ -4,6 +4,7 @@ use std::{
     net::{TcpListener, TcpStream},
     process::Command,
 };
+use regex::Regex;
 
 // use error_chain::error_chain;
 // error_chain! {
@@ -14,8 +15,8 @@ use std::{
 // }
 
 const NORKART_URL_FULL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/tileset.json?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
-const NORKART_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/tileset.json?api_key=";
-const NORKART_API_KEY: &str = "DB124B20-9D21-4647-B65A-16C651553E48";
+const NORKART_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
+const NORKART_API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
@@ -42,12 +43,20 @@ fn handle_connection(mut stream: TcpStream) {
     
     println!("Request from Unity: {:#?}", http_request);
 
-    // Send request to webatlas and parse response
-    let mut res = reqwest::blocking::get(NORKART_URL_FULL).unwrap();
-    let mut body = String::new();
-    res.read_to_string(&mut body).unwrap(); 
-    fs::write("tmp/1_0/tileset.json", body).expect("Unable to write file");
+    // Request root tileset
+    let result = request_tileset(NORKART_URL_FULL); 
 
+    // Find all references tilesets
+    let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
+    let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
+    for m in matches.iter() {
+        println!("Found: {}", m);
+    }
+    
+    fs::write("tmp/1_0/tileset.json", result).expect("Unable to write file");
+
+
+    // Convert from 3DTiles-1.0 to 3DTiles-1.1
     let _ = if cfg!(target_os = "windows") {
         Command::new("cmd")
             .args(["/C", "npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json"])
@@ -69,16 +78,14 @@ fn handle_connection(mut stream: TcpStream) {
     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
     // println!("Response:\n{}", response);
     stream.write_all(response.as_bytes()).unwrap();
+}
 
-
-    // println!("Status: {}", res.status());
-    // println!("Headers:\n{:#?}", res.headers());
-    // println!("Body:\n{}", body);
-    
-    
-
-
-    
+fn request_tileset(req_url: &str) -> String {
+    // Send request to webatlas and parse response
+    let mut res = reqwest::blocking::get(req_url).unwrap();
+    let mut body = String::new();
+    res.read_to_string(&mut body).unwrap();
+    return body;
 }
 
 // fn handle_connection(mut stream: TcpStream) {
