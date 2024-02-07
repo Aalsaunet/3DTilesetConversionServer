@@ -48,14 +48,7 @@ fn handle_connection(mut stream: TcpStream) {
     fs::write("tmp/1_0/tileset.json", &result).expect("Unable to write file");
 
     // Find all references tilesets
-    let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
-    let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
-    for m in matches.iter() {
-        // println!("Found: {}", m);
-        let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
-        let result = request_tileset(&url); 
-        fs::write(format!("tmp/1_0/{}", m), &result).expect("Unable to write file");
-    }
+    resolve_child_tilesets(result);
 
     // Convert from 3DTiles-1.0 to 3DTiles-1.1
     let _ = if cfg!(target_os = "windows") {
@@ -73,14 +66,26 @@ fn handle_connection(mut stream: TcpStream) {
     
     // Create response back to the CesiumForUnity plugin
     let status_line = "HTTP/1.1 200 OK";
-    for m in matches.iter() {
-        let contents = fs::read_to_string(format!("tmp/1_1/{}", m)).expect("Unable to read file");
+    for file in fs::read_dir("tmp/1_1/").unwrap() {
+        // println!("Name: {}", path.unwrap().path().display())
+        let contents = fs::read_to_string(file.unwrap().path()).expect("Unable to read file");
         let length = contents.len();
         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
         stream.write_all(response.as_bytes()).unwrap();
-    }
+    }  
 
     println!("Sent all tilesets to Unity");
+}
+
+fn resolve_child_tilesets(result: String) {
+    let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
+    let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
+    for m in matches.iter() {
+        //println!("Found: {}", m);
+        let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
+        let result = request_tileset(&url); 
+        fs::write(format!("tmp/1_0/{}", m), &result).expect("Unable to write file");
+    }
 }
 
 fn request_tileset(req_url: &str) -> String {
@@ -150,3 +155,10 @@ fn request_tileset(req_url: &str) -> String {
     // let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
     // // println!("Response:\n{}", response);
     // stream.write_all(response.as_bytes()).unwrap();
+
+    // for m in matches.iter() {
+    //     let contents = fs::read_to_string(format!("tmp/1_1/{}", m)).expect("Unable to read file");
+    //     let length = contents.len();
+    //     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+    //     stream.write_all(response.as_bytes()).unwrap();
+    // }
