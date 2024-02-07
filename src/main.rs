@@ -45,38 +45,32 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Request from Unity: {:#?}", http_request);
 
     // Request root tileset
-    let result = request_tileset(NORKART_URL_FULL); 
+    // fetch_all_tilesets();
+
+    // Convert from 3DTiles-1.0 to 3DTiles-1.1
+    // convert_all_tilesets();
+    
+    // Create response back to the CesiumForUnity plugin
+    let status_line = "HTTP/1.1 200 OK";
+    for file in fs::read_dir("tmp/1_1/").unwrap() {
+        let contents = fs::read_to_string(file.unwrap().path()).expect("Unable to read file");
+        let length = contents.len();
+        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+        
+        if let Err(e) = stream.write_all(response.as_bytes()) {
+            println!("Error: {}", e);
+        };
+    }  
+    println!("Sent all tilesets to Unity");
+}
+
+fn fetch_all_tilesets() {
+    let result = request_tileset(NORKART_URL_FULL);
     fs::write("tmp/1_0/tileset.json", &result).expect("Unable to write file");
 
     // Find all references tilesets
     resolve_child_tilesets(result);
     println!("Fetched all 3DTiles-1.0 tilesets");
-
-    // Convert from 3DTiles-1.0 to 3DTiles-1.1
-    let _ = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(["/C", "npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json"])
-            .output()
-            .expect("Error when upgrading tileset")
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg("npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json")
-            .output()
-            .expect("Error when upgrading tileset")
-    };
-    println!("Converted all 3DTiles-1.0 tilesets into the 1.1 format");
-    
-    // Create response back to the CesiumForUnity plugin
-    let status_line = "HTTP/1.1 200 OK";
-    for file in fs::read_dir("tmp/1_1/").unwrap() {
-        // println!("Name: {}", path.unwrap().path().display())
-        let contents = fs::read_to_string(file.unwrap().path()).expect("Unable to read file");
-        let length = contents.len();
-        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-        stream.write_all(response.as_bytes()).unwrap();
-    }  
-    println!("Sent all tilesets to Unity");
 }
 
 fn resolve_child_tilesets(result: String) {
@@ -104,6 +98,22 @@ fn request_tileset(req_url: &str) -> String {
     let mut body = String::new();
     res.read_to_string(&mut body).unwrap();
     return body;
+}
+
+fn convert_all_tilesets() {
+    let _ = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(["/C", "npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json"])
+            .output()
+            .expect("Error when upgrading tileset")
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .arg("npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json")
+            .output()
+            .expect("Error when upgrading tileset")
+    };
+    println!("Converted all 3DTiles-1.0 tilesets into the 1.1 format");
 }
 
 // fn handle_connection(mut stream: TcpStream) {
