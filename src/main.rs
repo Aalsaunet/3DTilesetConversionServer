@@ -45,16 +45,18 @@ fn handle_connection(mut stream: TcpStream) {
 
     // Request root tileset
     let result = request_tileset(NORKART_URL_FULL); 
+    fs::write("tmp/1_0/tileset.json", &result).expect("Unable to write file");
 
     // Find all references tilesets
     let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
     let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
     for m in matches.iter() {
         println!("Found: {}", m);
+        let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
+        let result = request_tileset(&url); 
+        // fs::write("tmp/1_0/tileset.json", &result).expect("Unable to write file");
+        fs::write(format!("tmp/1_0/{}", m), &result).expect("Unable to write file");
     }
-    
-    fs::write("tmp/1_0/tileset.json", result).expect("Unable to write file");
-
 
     // Convert from 3DTiles-1.0 to 3DTiles-1.1
     let _ = if cfg!(target_os = "windows") {
