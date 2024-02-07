@@ -52,7 +52,7 @@ fn handle_connection(mut stream: TcpStream) {
     
     // Create response back to the CesiumForUnity plugin
     let status_line = "HTTP/1.1 200 OK";
-    for file in fs::read_dir("tmp/1_1/").unwrap() {
+    for file in fs::read_dir("tmp/1_2/").unwrap() {
         let contents = fs::read_to_string(file.unwrap().path()).expect("Unable to read file");
         let length = contents.len();
         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
