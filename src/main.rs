@@ -5,8 +5,12 @@ use std::{
     process::Command,
     path::Path
 };
+// use std::io::Cursor;
 use regex::Regex;
+use std::fs::File;
 
+
+// type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 // use error_chain::error_chain;
 // error_chain! {
 //     foreign_links {
@@ -46,7 +50,7 @@ fn handle_connection(mut stream: TcpStream, is_first_request: bool) {
     println!("Request from Unity: {:#?}", http_request.first().unwrap());
 
     // Request root tileset
-    // fetch_all_tilesets();
+    fetch_all_tilesets();
 
     // Convert from 3DTiles-1.0 to 3DTiles-1.1
     // convert_all_tilesets();
@@ -58,7 +62,7 @@ fn handle_connection(mut stream: TcpStream, is_first_request: bool) {
     }
 
     let request_path = http_request.first().unwrap();
-    let re = Regex::new(r"(?<ts>[0-9]*tileset.json)").unwrap();
+    let re = Regex::new(r"(?<ts>[0-9]+tileset.json|[0-9]+model.cmpt)").unwrap();
     let Some(caps) = re.captures(request_path) else {
         // stream_tileset(&stream, "tileset.json");
         println!("No match!");
@@ -66,53 +70,10 @@ fn handle_connection(mut stream: TcpStream, is_first_request: bool) {
     };
 
     stream_tileset(&stream, &caps["ts"]);
-
     // stream_all_tilesets(&stream);
-    // println!("Sent all tilesets to Unity");
 }
 
-fn stream_tileset(mut stream: &TcpStream, tileset: &str) {
-    let status_line = "HTTP/1.1 200 OK";
-    let contents = fs::read_to_string(format!("tmp/1_1/{}", tileset)).expect("Unable to read file");
-    let length: usize = contents.len();
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-
-    if let Err(e) = stream.write_all(response.as_bytes()) {
-        println!("Error: {}", e);
-    };
-    println!("Sent {:#?} to Unity", tileset);
-}
-
-
-fn stream_all_tilesets(mut stream: &TcpStream) {
-    let status_line = "HTTP/1.1 200 OK";
-    let contents = fs::read_to_string("tmp/1_2/tileset.json").expect("Unable to read file");
-    let length: usize = contents.len();
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-
-    if let Err(e) = stream.write_all(response.as_bytes()) {
-        println!("Error: {}", e);
-    };
-    // stream_child_tilesets(stream, contents);
-}
-
-fn stream_child_tilesets(mut stream: &TcpStream, parent_content: String) {
-    let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
-    let matches: Vec<_> = re.find_iter(&parent_content).map(|m| m.as_str()).collect();
-    for m in matches.iter() {
-        let status_line = "HTTP/1.1 200 OK";
-        let child_content = fs::read_to_string(format!("tmp/1_2/{}", m)).expect("Unable to read file");
-        let length: usize = child_content.len();
-        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{child_content}");
-
-        if let Err(e) = stream.write_all(response.as_bytes()) {
-            println!("Error: {}", e);
-        };
-
-        stream_child_tilesets(stream, child_content);
-    }
-}
-
+/////// REQUEST FUNCTIONS ////////
 fn fetch_all_tilesets() {
     let result = request_tileset(NORKART_URL_FULL);
     fs::write("tmp/1_0/tileset.json", &result).expect("Unable to write file");
@@ -123,19 +84,25 @@ fn fetch_all_tilesets() {
 }
 
 fn fetch_child_tilesets(result: String) {
-    let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
+    let re = Regex::new(r"([0-9]+tileset.json|[0-9]+model.cmpt)").unwrap();
     let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
     for m in matches.iter() {
         let path = "tmp/1_0/".to_string() + m;
         if !Path::new(&path).exists() {
             println!("Sending request for {}", m);
             let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
+            if m.contains("cmpt") {
+                request_cmpt(&url, m);
+                continue; 
+            }
+
             let result = request_tileset(&url); 
             fs::write(format!("tmp/1_0/{}", m), &result).expect("Unable to write file");
             fetch_child_tilesets(result);
         } else {
             println!("{} already cached locally.", m);
-            let result = fs::read_to_string(path).expect("Unable to read file");
+            if m.contains("cmpt") { continue; }
+            let result: String = fs::read_to_string(path).expect("Unable to read file");
             fetch_child_tilesets(result);
         }    
     }
@@ -149,6 +116,37 @@ fn request_tileset(req_url: &str) -> String {
     return body;
 }
 
+fn request_cmpt(req_url: &str, file_name: &str) {
+    // Send request to webatlas and parse response
+    let response = reqwest::blocking::get(req_url).unwrap();
+    let path_str = "tmp/1_0/".to_string() + file_name;
+    let path = Path::new(&path_str);
+
+    let mut file = match File::create(&path) {
+        Err(why) => panic!("Couldn't create {}", why),
+        Ok(file) => file,
+    };
+
+    let content =  response.bytes().unwrap();
+    if let Err(e) = file.write_all(&content) {
+        println!("Error when writing cmpt to file: {}", e);
+    };
+}
+
+/////// RESPONSE FUNCTIONS ////////
+fn stream_tileset(mut stream: &TcpStream, tileset: &str) {
+    let status_line = "HTTP/1.1 200 OK";
+    let contents = fs::read_to_string(format!("tmp/1_0/{}", tileset)).expect("Unable to read file");
+    let length: usize = contents.len();
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+    if let Err(e) = stream.write_all(response.as_bytes()) {
+        println!("Error when streaming tileset: {}", e);
+    };
+    println!("Sent {:#?} to Unity", tileset);
+}
+
+/////// CONVERSION FUNCTIONS ////////
 fn convert_all_tilesets() {
     let _ = if cfg!(target_os = "windows") {
         Command::new("cmd")
@@ -165,79 +163,32 @@ fn convert_all_tilesets() {
     println!("Converted all 3DTiles-1.0 tilesets into the 1.1 format");
 }
 
-// fn handle_connection(mut stream: TcpStream) {
-//     let buf_reader = BufReader::new(&mut stream);
-//     let request_line = buf_reader.lines().next().unwrap().unwrap();
-
-//     let (status_line, filename) = if request_line == "GET / HTTP/1.1" {
-//         ("HTTP/1.1 200 OK", "hello.html")
-//     } else {
-//         ("HTTP/1.1 404 NOT FOUND", "404.html")
-//     };
-
-//     let contents = fs::read_to_string(filename).unwrap();
-//     let length = contents.len();
-
-//     let response =
-//         format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-
-//     stream.write_all(response.as_bytes()).unwrap();
-// }
-
-// fn handle_connection(mut stream: TcpStream) {
-//     let buf_reader = BufReader::new(&mut stream);
-//     let http_request: Vec<_> = buf_reader
-//         .lines()
-//         .map(|result| result.unwrap())
-//         .take_while(|line| !line.is_empty())
-//         .collect();
-
+// fn stream_all_tilesets(mut stream: &TcpStream) {
 //     let status_line = "HTTP/1.1 200 OK";
-//     let contents = fs::read_to_string("hello.html").unwrap();
-//     let length = contents.len();
+//     let contents = fs::read_to_string("tmp/1_2/tileset.json").expect("Unable to read file");
+//     let length: usize = contents.len();
+//     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
 
-//     let response =
-//         format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-
-//     stream.write_all(response.as_bytes()).unwrap();
+//     if let Err(e) = stream.write_all(response.as_bytes()) {
+//         println!("Error: {}", e);
+//     };
+//     // stream_child_tilesets(stream, contents);
 // }
 
-// Command::new("sh")
-    //     .arg("-c")
-    //     .arg("npx 3d-tiles-tools upgrade -f -i tmp/tileset0.json -o tmp/tileset1.json")
-    //     .output()
-    //     .expect("Error when upgrading tileset");
+// fn stream_child_tilesets(mut stream: &TcpStream, parent_content: String) {
+//     let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
+//     let matches: Vec<_> = re.find_iter(&parent_content).map(|m| m.as_str()).collect();
+//     for m in matches.iter() {
+//         let status_line = "HTTP/1.1 200 OK";
+//         let child_content = fs::read_to_string(format!("tmp/1_2/{}", m)).expect("Unable to read file");
+//         let length: usize = child_content.len();
+//         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{child_content}");
 
-    // Command::new("npx 3d-tiles-tools upgrade")
-    //     .arg("-f")
-    //     .arg("-i")
-    //     .arg("/Users/adr0x/Projects/3DTilesetConversionServer/tmp/tileset0.json")
-    //     .arg("-o")
-    //     .arg("/Users/adr0x/Projects/3DTilesetConversionServer/tmp/tileset1.json")
-    //     .output()
-    //     .expect("Error when upgrading tileset");
+//         if let Err(e) = stream.write_all(response.as_bytes()) {
+//             println!("Error: {}", e);
+//         };
 
-    // let status_line = "HTTP/1.1 200 OK";
-    // let contents = fs::read_to_string("tmp/1_1/tileset.json").expect("Unable to read file");
-    // let length = contents.len();
+//         stream_child_tilesets(stream, child_content);
+//     }
+// }
 
-    // let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-    // // println!("Response:\n{}", response);
-    // stream.write_all(response.as_bytes()).unwrap();
-
-    // for m in matches.iter() {
-    //     let contents = fs::read_to_string(format!("tmp/1_1/{}", m)).expect("Unable to read file");
-    //     let length = contents.len();
-    //     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-    //     stream.write_all(response.as_bytes()).unwrap();
-    // }
-
-        // for file in fs::read_dir("tmp/1_2/").unwrap() {
-    //     let contents = fs::read_to_string(file.unwrap().path()).expect("Unable to read file");
-    //     let length = contents.len();
-    //     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-        
-    //     if let Err(e) = stream.write_all(response.as_bytes()) {
-    //         println!("Error: {}", e);
-    //     };
-    // }
