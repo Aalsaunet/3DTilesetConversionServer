@@ -45,7 +45,7 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Request from Unity: {:#?}", http_request.first().unwrap());
 
     // Request tilesets from remote server
-    // fetch_all_tilesets();
+    fetch_all_tilesets();
 
     // Convert from 3DTiles-1.0 to 3DTiles-1.1
     // convert_all_tilesets();
@@ -125,8 +125,9 @@ fn request_cmpt(req_url: &str, file_name: &str) {
 fn stream_tileset(mut stream: &TcpStream, filename: &str) {
     let path = "tmp/1_0/".to_string() + filename;
     if !Path::new(&path).exists() {
-        println!("{} is not available locally", filename);
-        return;
+        println!("{} is not available locally. Fetching it", filename);
+        let url = TILESET_URL.to_string() + filename + API_KEY;
+        request_cmpt(&url, filename);
     }
 
     if filename.contains("tileset.json") {
