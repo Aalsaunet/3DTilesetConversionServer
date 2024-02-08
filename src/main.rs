@@ -26,6 +26,8 @@ const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 fn main() {
     // Ensure the required 3DTiles-1.0 directory exists
     fs::create_dir_all("tmp/1_0").unwrap();
+    fs::create_dir_all("tmp/1_1").unwrap();
+    fs::create_dir_all("tmp/glb").unwrap();
     
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
     for stream in listener.incoming() {
@@ -45,7 +47,7 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Request from Unity: {:#?}", http_request.first().unwrap());
 
     // Request tilesets from remote server
-    fetch_all_tilesets();
+    // fetch_all_tilesets();
 
     // Convert from 3DTiles-1.0 to 3DTiles-1.1
     // convert_all_tilesets();
@@ -123,16 +125,12 @@ fn request_cmpt(req_url: &str, file_name: &str) {
 
 /////// RESPONSE FUNCTIONS ////////
 fn stream_tileset(mut stream: &TcpStream, filename: &str) {
-    let path = "tmp/1_0/".to_string() + filename;
-    if !Path::new(&path).exists() {
-        println!("{} is not available locally. Fetching it", filename);
-        let url = TILESET_URL.to_string() + filename + API_KEY;
-        request_cmpt(&url, filename);
-    }
+    let path1_0 = "tmp/1_0/".to_string() + filename;
+    // let path1_1 = "tmp/1_1/".to_string() + filename;
 
     if filename.contains("tileset.json") {
         let status_line = "HTTP/1.1 200 OK";
-        let contents = fs::read_to_string(path).expect("Unable to read file");
+        let contents = fs::read_to_string(path1_0).expect("Unable to read file");
         let length: usize = contents.len();
         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
     
@@ -140,8 +138,18 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
             println!("Error when streaming tileset: {}", e);
         }; 
     } else if filename.contains("cmpt") {
-        let contents = fs::read(path).expect("Unable to read file");    
-        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
+        if !Path::new(&path1_0).exists() {
+            println!("{} is not available locally. Fetching it", filename);
+            let url = TILESET_URL.to_string() + filename + API_KEY;
+            request_cmpt(&url, filename);
+        }
+
+        // Convert the cmpt file to a glb file and return that instead
+        let filename_stemmed = Path::new(filename).file_stem().unwrap().to_str().unwrap();
+        convert_cmpt_to_glb(filename_stemmed);
+
+        let contents = fs::read(format!("tmp/glb/{}.glb", filename_stemmed)).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
+        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n",
             contents.len(),
         );
         stream.write_all(response.as_bytes()).unwrap();
@@ -159,21 +167,40 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
 }
 
 /////// CONVERSION FUNCTIONS ////////
-fn convert_all_tilesets() {
+fn convert_cmpt_to_glb(filename_stemmed: &str) {
+    // npx 3d-tiles-tools cmptToGlb -i ./specs/data/composite.cmpt -o ./output/extracted.glb
+    let cmd = format!("npx 3d-tiles-tools cmptToGlb -i tmp/1_0/{}.cmpt -o tmp/glb/{}.glb", &filename_stemmed, &filename_stemmed);
     let _ = if cfg!(target_os = "windows") {
         Command::new("cmd")
-            .args(["/C", "npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json"])
+            .args(["/C", &cmd])
             .output()
             .expect("Error when upgrading tileset")
     } else {
         Command::new("sh")
             .arg("-c")
-            .arg("npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json")
+            .arg(&cmd)
             .output()
             .expect("Error when upgrading tileset")
     };
-    println!("Converted all 3DTiles-1.0 tilesets into the 1.1 format");
+    println!("Converted {:#?} from cmpt to glb", filename_stemmed);
 }
+
+// fn convert_all_tilesets() {
+//     // npx 3d-tiles-tools upgrade --targetVersion 1.1 -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json
+//     let _ = if cfg!(target_os = "windows") {
+//         Command::new("cmd")
+//             .args(["/C", "npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json"])
+//             .output()
+//             .expect("Error when upgrading tileset")
+//     } else {
+//         Command::new("sh")
+//             .arg("-c")
+//             .arg("npx 3d-tiles-tools upgrade -f -i tmp/1_0/tileset.json -o tmp/1_1/tileset.json")
+//             .output()
+//             .expect("Error when upgrading tileset")
+//     };
+//     println!("Converted all 3DTiles-1.0 tilesets into the 1.1 format");
+// }
 
 // fn stream_all_tilesets(mut stream: &TcpStream) {
 //     let status_line = "HTTP/1.1 200 OK";
