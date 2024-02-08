@@ -20,20 +20,21 @@ const NORKART_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
 const NORKART_API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
-
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
-
-        handle_connection(stream);
-    }
-}
-
-fn handle_connection(mut stream: TcpStream) {
     // Make required directories if they don't already exits
     fs::create_dir_all("tmp/1_0").unwrap();
     fs::create_dir_all("tmp/1_1").unwrap();
+    fs::create_dir_all("tmp/1_2").unwrap();
+    let mut is_first_request = true;
     
+    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    for stream in listener.incoming() {
+        let stream = stream.unwrap();
+        handle_connection(stream, is_first_request);
+        is_first_request = false;
+    }
+}
+
+fn handle_connection(mut stream: TcpStream, is_first_request: bool) {
     // Parse received request
     let buf_reader = BufReader::new(&mut stream);
     let http_request: Vec<_> = buf_reader
@@ -41,8 +42,8 @@ fn handle_connection(mut stream: TcpStream) {
         .map(|result| result.unwrap())
         .take_while(|line| !line.is_empty())
         .collect();
-    
-    println!("Request from Unity: {:#?}", http_request);
+
+    println!("Request from Unity: {:#?}", http_request.first().unwrap());
 
     // Request root tileset
     // fetch_all_tilesets();
@@ -51,17 +52,65 @@ fn handle_connection(mut stream: TcpStream) {
     // convert_all_tilesets();
     
     // Create response back to the CesiumForUnity plugin
+    if is_first_request {
+        stream_tileset(&stream, "tileset.json");
+        return;
+    }
+
+    let request_path = http_request.first().unwrap();
+    let re = Regex::new(r"(?<ts>[0-9]*tileset.json)").unwrap();
+    let Some(caps) = re.captures(request_path) else {
+        // stream_tileset(&stream, "tileset.json");
+        println!("No match!");
+        return;
+    };
+
+    stream_tileset(&stream, &caps["ts"]);
+
+    // stream_all_tilesets(&stream);
+    // println!("Sent all tilesets to Unity");
+}
+
+fn stream_tileset(mut stream: &TcpStream, tileset: &str) {
     let status_line = "HTTP/1.1 200 OK";
-    for file in fs::read_dir("tmp/1_2/").unwrap() {
-        let contents = fs::read_to_string(file.unwrap().path()).expect("Unable to read file");
-        let length = contents.len();
-        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-        
+    let contents = fs::read_to_string(format!("tmp/1_1/{}", tileset)).expect("Unable to read file");
+    let length: usize = contents.len();
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+    if let Err(e) = stream.write_all(response.as_bytes()) {
+        println!("Error: {}", e);
+    };
+    println!("Sent {:#?} to Unity", tileset);
+}
+
+
+fn stream_all_tilesets(mut stream: &TcpStream) {
+    let status_line = "HTTP/1.1 200 OK";
+    let contents = fs::read_to_string("tmp/1_2/tileset.json").expect("Unable to read file");
+    let length: usize = contents.len();
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+    if let Err(e) = stream.write_all(response.as_bytes()) {
+        println!("Error: {}", e);
+    };
+    // stream_child_tilesets(stream, contents);
+}
+
+fn stream_child_tilesets(mut stream: &TcpStream, parent_content: String) {
+    let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
+    let matches: Vec<_> = re.find_iter(&parent_content).map(|m| m.as_str()).collect();
+    for m in matches.iter() {
+        let status_line = "HTTP/1.1 200 OK";
+        let child_content = fs::read_to_string(format!("tmp/1_2/{}", m)).expect("Unable to read file");
+        let length: usize = child_content.len();
+        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{child_content}");
+
         if let Err(e) = stream.write_all(response.as_bytes()) {
             println!("Error: {}", e);
         };
-    }  
-    println!("Sent all tilesets to Unity");
+
+        stream_child_tilesets(stream, child_content);
+    }
 }
 
 fn fetch_all_tilesets() {
@@ -69,11 +118,11 @@ fn fetch_all_tilesets() {
     fs::write("tmp/1_0/tileset.json", &result).expect("Unable to write file");
 
     // Find all references tilesets
-    resolve_child_tilesets(result);
+    fetch_child_tilesets(result);
     println!("Fetched all 3DTiles-1.0 tilesets");
 }
 
-fn resolve_child_tilesets(result: String) {
+fn fetch_child_tilesets(result: String) {
     let re = Regex::new(r"([0-9]+tileset.json)").unwrap();
     let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
     for m in matches.iter() {
@@ -83,11 +132,11 @@ fn resolve_child_tilesets(result: String) {
             let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
             let result = request_tileset(&url); 
             fs::write(format!("tmp/1_0/{}", m), &result).expect("Unable to write file");
-            resolve_child_tilesets(result);
+            fetch_child_tilesets(result);
         } else {
             println!("{} already cached locally.", m);
             let result = fs::read_to_string(path).expect("Unable to read file");
-            resolve_child_tilesets(result);
+            fetch_child_tilesets(result);
         }    
     }
 }
@@ -181,4 +230,14 @@ fn convert_all_tilesets() {
     //     let length = contents.len();
     //     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
     //     stream.write_all(response.as_bytes()).unwrap();
+    // }
+
+        // for file in fs::read_dir("tmp/1_2/").unwrap() {
+    //     let contents = fs::read_to_string(file.unwrap().path()).expect("Unable to read file");
+    //     let length = contents.len();
+    //     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+        
+    //     if let Err(e) = stream.write_all(response.as_bytes()) {
+    //         println!("Error: {}", e);
+    //     };
     // }
