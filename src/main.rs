@@ -45,7 +45,7 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Request from Unity: {:#?}", http_request.first().unwrap());
 
     // Request tilesets from remote server
-    fetch_all_tilesets();
+    // fetch_all_tilesets();
 
     // Convert from 3DTiles-1.0 to 3DTiles-1.1
     // convert_all_tilesets();
@@ -123,9 +123,15 @@ fn request_cmpt(req_url: &str, file_name: &str) {
 
 /////// RESPONSE FUNCTIONS ////////
 fn stream_tileset(mut stream: &TcpStream, filename: &str) {
+    let path = "tmp/1_0/".to_string() + filename;
+    if !Path::new(&path).exists() {
+        println!("{} is not available locally", filename);
+        return;
+    }
+
     if filename.contains("tileset.json") {
         let status_line = "HTTP/1.1 200 OK";
-        let contents = fs::read_to_string(format!("tmp/1_0/{}", filename)).expect("Unable to read file");
+        let contents = fs::read_to_string(path).expect("Unable to read file");
         let length: usize = contents.len();
         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
     
@@ -133,7 +139,7 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
             println!("Error when streaming tileset: {}", e);
         }; 
     } else if filename.contains("cmpt") {
-        let contents = fs::read(format!("tmp/1_0/{}", filename)).expect("Unable to read file");    
+        let contents = fs::read(path).expect("Unable to read file");    
         let response = format!("HTTP/1.0 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
             contents.len(),
         );
