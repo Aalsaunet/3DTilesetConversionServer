@@ -19,66 +19,54 @@ use std::fs::File;
 //     }
 // }
 
-const NORKART_URL_FULL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/tileset.json?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
-const NORKART_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
-const NORKART_API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
+const TILESET_URL_FULL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/tileset.json?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
+const TILESET_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
+const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
 fn main() {
-    // Make required directories if they don't already exits
+    // Ensure the required 3DTiles-1.0 directory exists
     fs::create_dir_all("tmp/1_0").unwrap();
-    fs::create_dir_all("tmp/1_1").unwrap();
-    fs::create_dir_all("tmp/1_2").unwrap();
-    let mut is_first_request = true;
     
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        handle_connection(stream, is_first_request);
-        is_first_request = false;
+        handle_connection(stream);
     }
 }
 
-fn handle_connection(mut stream: TcpStream, is_first_request: bool) {
-    // Parse received request
+fn handle_connection(mut stream: TcpStream) {
+    // Parse received request from Unity
     let buf_reader = BufReader::new(&mut stream);
     let http_request: Vec<_> = buf_reader
         .lines()
         .map(|result| result.unwrap())
         .take_while(|line| !line.is_empty())
         .collect();
-
     println!("Request from Unity: {:#?}", http_request.first().unwrap());
 
-    // Request root tileset
+    // Request tilesets from remote server
     fetch_all_tilesets();
 
     // Convert from 3DTiles-1.0 to 3DTiles-1.1
     // convert_all_tilesets();
     
-    // Create response back to the CesiumForUnity plugin
-    if is_first_request {
-        stream_tileset(&stream, "tileset.json");
-        return;
-    }
-
+    // Create response back to Unity
     let request_path = http_request.first().unwrap();
-    let re = Regex::new(r"(?<ts>[0-9]+tileset.json|[0-9]+model.cmpt)").unwrap();
+    let re = Regex::new(r"(?<match>[0-9]*tileset.json|[0-9]+model.cmpt)").unwrap();
     let Some(caps) = re.captures(request_path) else {
-        // stream_tileset(&stream, "tileset.json");
-        println!("No match!");
+        println!("No match found for request!");
         return;
     };
 
-    stream_tileset(&stream, &caps["ts"]);
-    // stream_all_tilesets(&stream);
+    stream_tileset(&stream, &caps["match"]);
 }
 
 /////// REQUEST FUNCTIONS ////////
 fn fetch_all_tilesets() {
-    let result = request_tileset(NORKART_URL_FULL);
+    let result = request_tileset(TILESET_URL_FULL);
     fs::write("tmp/1_0/tileset.json", &result).expect("Unable to write file");
 
-    // Find all references tilesets
+    // Fetch all referenced tilesets recursively
     fetch_child_tilesets(result);
     println!("Fetched all 3DTiles-1.0 tilesets");
 }
@@ -90,7 +78,7 @@ fn fetch_child_tilesets(result: String) {
         let path = "tmp/1_0/".to_string() + m;
         if !Path::new(&path).exists() {
             println!("Sending request for {}", m);
-            let url = NORKART_URL.to_string() + m + NORKART_API_KEY;
+            let url = TILESET_URL.to_string() + m + API_KEY;
             if m.contains("cmpt") {
                 request_cmpt(&url, m);
                 continue; 
@@ -134,16 +122,33 @@ fn request_cmpt(req_url: &str, file_name: &str) {
 }
 
 /////// RESPONSE FUNCTIONS ////////
-fn stream_tileset(mut stream: &TcpStream, tileset: &str) {
-    let status_line = "HTTP/1.1 200 OK";
-    let contents = fs::read_to_string(format!("tmp/1_0/{}", tileset)).expect("Unable to read file");
-    let length: usize = contents.len();
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+fn stream_tileset(mut stream: &TcpStream, filename: &str) {
+    if filename.contains("tileset.json") {
+        let status_line = "HTTP/1.1 200 OK";
+        let contents = fs::read_to_string(format!("tmp/1_0/{}", filename)).expect("Unable to read file");
+        let length: usize = contents.len();
+        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+    
+        if let Err(e) = stream.write_all(response.as_bytes()) {
+            println!("Error when streaming tileset: {}", e);
+        }; 
+    } else if filename.contains("cmpt") {
+        let contents = fs::read(format!("tmp/1_0/{}", filename)).expect("Unable to read file");    
+        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
+            contents.len(),
+        );
+        stream.write_all(response.as_bytes()).unwrap();
+        stream.write_all(&contents).unwrap();
+        stream.flush().unwrap();
 
-    if let Err(e) = stream.write_all(response.as_bytes()) {
-        println!("Error when streaming tileset: {}", e);
-    };
-    println!("Sent {:#?} to Unity", tileset);
+        // if let Err(e) = stream.write_all(response.as_bytes()) {
+        //     println!("Error when streaming tileset: {}", e);
+        // }; 
+    } else {
+        println!("Unknown requested file: {}", filename);
+    }
+
+    println!("Sent {:#?} to Unity", filename);
 }
 
 /////// CONVERSION FUNCTIONS ////////
@@ -165,7 +170,7 @@ fn convert_all_tilesets() {
 
 // fn stream_all_tilesets(mut stream: &TcpStream) {
 //     let status_line = "HTTP/1.1 200 OK";
-//     let contents = fs::read_to_string("tmp/1_2/tileset.json").expect("Unable to read file");
+//     let contents = fs::read_to_string("tmp/1_1/tileset.json").expect("Unable to read file");
 //     let length: usize = contents.len();
 //     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
 
@@ -180,7 +185,7 @@ fn convert_all_tilesets() {
 //     let matches: Vec<_> = re.find_iter(&parent_content).map(|m| m.as_str()).collect();
 //     for m in matches.iter() {
 //         let status_line = "HTTP/1.1 200 OK";
-//         let child_content = fs::read_to_string(format!("tmp/1_2/{}", m)).expect("Unable to read file");
+//         let child_content = fs::read_to_string(format!("tmp/1_1/{}", m)).expect("Unable to read file");
 //         let length: usize = child_content.len();
 //         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{child_content}");
 
