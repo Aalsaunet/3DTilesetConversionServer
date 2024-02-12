@@ -59,7 +59,7 @@ fn handle_connection(mut stream: TcpStream) {
     
     // Create response back to Unity
     let request_path = http_request.first().unwrap();
-    let re = Regex::new(r"(?<match>[0-9]*tileset.json|[0-9]+model.cmpt|[0-9]+model.b3dm)").unwrap();
+    let re = Regex::new(r"(?<match>[0-9]*tileset.json|[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
     let Some(caps) = re.captures(request_path) else {
         println!("No match found for request!");
         return;
@@ -109,7 +109,7 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
         stream.write_all(&contents).unwrap();
         stream.flush().unwrap(); 
 
-    } else if filename.contains("b3dm") {
+    } else if filename.contains("b3dm") || filename.contains("model") { // Assume suffixless model is a b3dm
         if !Path::new(&path_1_0).exists() {
             println!("{} is not available locally. Fetching it", filename);
             let url = TILESET_URL.to_string() + filename + API_KEY;
@@ -120,7 +120,7 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
         let filename_stemmed = Path::new(filename).file_stem().unwrap().to_str().unwrap();
         let path_glb = PATH_GLB.to_string() + "/" + filename_stemmed + ".glb";
         if !Path::new(&path_glb).exists() {
-            convert_b3dm_to_glb(filename_stemmed);
+            convert_b3dm_to_glb(filename, filename_stemmed);
         }
 
         let contents = fs::read(path_glb).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
@@ -182,9 +182,9 @@ fn convert_cmpt_to_glb(filename_stemmed: &str) {
     println!("Converted {:#?} from cmpt to glb", filename_stemmed);
 }
 
-fn convert_b3dm_to_glb(filename_stemmed: &str) {
+fn convert_b3dm_to_glb(filename: &str, filename_stemmed: &str) {
     // npx 3d-tiles-tools convertB3dmToGlb  -i ./specs/data/composite.cmpt -o ./output/extracted.glb
-    let cmd = format!("npx 3d-tiles-tools convertB3dmToGlb -i {}/{}.b3dm -o {}/{}.glb", PATH_1_0, &filename_stemmed, PATH_GLB, &filename_stemmed);
+    let cmd = format!("npx 3d-tiles-tools convertB3dmToGlb -i {}/{} -o {}/{}.glb", PATH_1_0, &filename, PATH_GLB, &filename_stemmed);
     let _ = if cfg!(target_os = "windows") {
         Command::new("cmd")
             .args(["/C", &cmd])
