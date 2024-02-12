@@ -26,8 +26,9 @@ const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 fn main() {
     // Ensure the required 3DTiles-1.0 directory exists
     fs::create_dir_all("tmp/1_0").unwrap();
-    fs::create_dir_all("tmp/1_1").unwrap();
+    // fs::create_dir_all("tmp/1_1").unwrap();
     fs::create_dir_all("tmp/glb").unwrap();
+    fs::create_dir_all("tmp/b3dm").unwrap();
     
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
     for stream in listener.incoming() {
@@ -61,6 +62,7 @@ fn handle_connection(mut stream: TcpStream) {
     };
 
     stream_tileset(&stream, &caps["match"]);
+    // println!("Done!")
 }
 
 /////// REQUEST FUNCTIONS ////////
@@ -151,8 +153,18 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
             convert_cmpt_to_glb(filename_stemmed);
         }
 
-        let contents = fs::read(path_glb).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
-        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n",
+        let path_b3dm = "tmp/b3dm/".to_string() + filename_stemmed + ".b3dm";
+        if !Path::new(&path_b3dm).exists() {
+            convert_glb_to_b3dm(filename_stemmed);
+        }
+
+        // let contents = fs::read(path_glb).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
+        // let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n",
+        //     contents.len(),
+        // );
+
+        let contents = fs::read(path_b3dm).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
+        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
             contents.len(),
         );
         stream.write_all(response.as_bytes()).unwrap();
@@ -186,6 +198,24 @@ fn convert_cmpt_to_glb(filename_stemmed: &str) {
             .expect("Error when upgrading tileset")
     };
     println!("Converted {:#?} from cmpt to glb", filename_stemmed);
+}
+
+fn convert_glb_to_b3dm(filename_stemmed: &str) {
+    // npx 3d-tiles-tools glbToB3dm -i ./specs/data/CesiumTexturedBox/CesiumTexturedBox.glb -o ./output/CesiumTexturedBox.b3dm
+    let cmd = format!("npx 3d-tiles-tools glbToB3dm -i tmp/glb/{}.glb -o tmp/b3dm/{}.b3dm", &filename_stemmed, &filename_stemmed);
+    let _ = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(["/C", &cmd])
+            .output()
+            .expect("Error when upgrading tileset")
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .arg(&cmd)
+            .output()
+            .expect("Error when upgrading tileset")
+    };
+    println!("Converted {:#?} from glb to b3dm", filename_stemmed);
 }
 
 // fn convert_all_tilesets() {
