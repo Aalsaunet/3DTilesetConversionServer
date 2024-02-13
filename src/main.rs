@@ -25,14 +25,13 @@ const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
 const PATH_1_0: &str = "tmp/1_0"; // "tmp/3DTiles-1_0" for recursive caching, "tmp/1_0" for on-demand
 const PATH_GLB: &str = "tmp/glb";
-const PATH_B3DM: &str = "tmp/b3dm";
+// const PATH_B3DM: &str = "tmp/b3dm";
 
 
 fn main() {
     // Ensure the required 3DTiles-1.0 directory exists
     fs::create_dir_all(PATH_1_0).unwrap();
     fs::create_dir_all(PATH_GLB).unwrap();
-    fs::create_dir_all(PATH_B3DM).unwrap();
     
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
     for stream in listener.incoming() {
@@ -193,25 +192,25 @@ fn convert_glb_to_b3dm(filename_stemmed: &str) {
     println!("Converted {:#?} from glb to b3dm", filename_stemmed);
 }
 
-fn optimize_b3dm(filename_stemmed: &str) {
-    // npx 3d-tiles-tools optimizeB3dm -i ./specs/data/Textured/batchedTextured.b3dm -o ./output/optimized.b3dm --options --draco.compressMeshes --draco.compressionLevel=9
-    let cmd = format!("npx 3d-tiles-tools optimizeB3dm -i {}/{}.b3dm -o {}/{}.b3dm  
-                                --options --draco.compressMeshes --draco.compressionLevel=9"
-                                , PATH_1_0, &filename_stemmed, PATH_B3DM, &filename_stemmed);
-    let _ = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(["/C", &cmd])
-            .output()
-            .expect("Error when upgrading tileset")
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg(&cmd)
-            .output()
-            .expect("Error when upgrading tileset")
-    };
-    println!("Converted {:#?} from glb to b3dm", filename_stemmed);
-}
+// fn optimize_b3dm(filename_stemmed: &str) {
+//     // npx 3d-tiles-tools optimizeB3dm -i ./specs/data/Textured/batchedTextured.b3dm -o ./output/optimized.b3dm --options --draco.compressMeshes --draco.compressionLevel=9
+//     let cmd = format!("npx 3d-tiles-tools optimizeB3dm -i {}/{}.b3dm -o {}/{}.b3dm  
+//                                 --options --draco.compressMeshes --draco.compressionLevel=9"
+//                                 , PATH_1_0, &filename_stemmed, PATH_B3DM, &filename_stemmed);
+//     let _ = if cfg!(target_os = "windows") {
+//         Command::new("cmd")
+//             .args(["/C", &cmd])
+//             .output()
+//             .expect("Error when upgrading tileset")
+//     } else {
+//         Command::new("sh")
+//             .arg("-c")
+//             .arg(&cmd)
+//             .output()
+//             .expect("Error when upgrading tileset")
+//     };
+//     println!("Converted {:#?} from glb to b3dm", filename_stemmed);
+// }
 
 /////// DOWNLOAD EVERYTHING FUNCTIONS ////////
 fn fetch_all_tilesets() {
