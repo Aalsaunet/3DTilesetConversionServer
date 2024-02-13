@@ -23,7 +23,7 @@ const TILESET_URL_FULL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fc
 const TILESET_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
 const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
-const PATH_1_0: &str = "tmp/1_0";
+const PATH_1_0: &str = "tmp/1_0"; // "tmp/3DTiles-1_0" for recursive caching, "tmp/1_0" for on-demand
 const PATH_GLB: &str = "tmp/glb";
 const PATH_B3DM: &str = "tmp/b3dm";
 
@@ -49,7 +49,7 @@ fn handle_connection(mut stream: TcpStream) {
         .map(|result| result.unwrap())
         .take_while(|line| !line.is_empty())
         .collect();
-    println!("Request from Unity: {:#?}", http_request.first().unwrap());
+    // println!("Request from Unity: {:#?}", http_request.first().unwrap());
 
     // Request tilesets from remote server
     // fetch_all_tilesets();
@@ -88,49 +88,24 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
         if let Err(e) = stream.write_all(response.as_bytes()) {
             println!("Error when streaming tileset: {}", e);
         }; 
-    } else if filename.contains("cmpt") {
-        if !Path::new(&path_1_0).exists() {
-            println!("{} is not available locally. Fetching it", filename);
-            let url = TILESET_URL.to_string() + filename + API_KEY;
-            request_and_cache_binary_model_file(&url, filename);
-        }
-
-        // Convert the cmpt file to a glb file and return that instead
+    } else if filename.contains("model") { // Assume suffixless model is a b3dm 
         let filename_stemmed = Path::new(filename).file_stem().unwrap().to_str().unwrap();
         let path_glb = PATH_GLB.to_string() + "/" + filename_stemmed + ".glb";
-        if !Path::new(&path_glb).exists() {
-            convert_cmpt_to_glb(filename_stemmed);
-        }
-        let contents = fs::read(path_glb).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
-        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n",
-            contents.len(),
-        );
-        stream.write_all(response.as_bytes()).unwrap();
-        stream.write_all(&contents).unwrap();
-        stream.flush().unwrap(); 
-
-    } else if filename.contains("b3dm") || filename.contains("model") { // Assume suffixless model is a b3dm
-        if !Path::new(&path_1_0).exists() {
-            println!("{} is not available locally. Fetching it", filename);
-            let url = TILESET_URL.to_string() + filename + API_KEY;
-            request_and_cache_binary_model_file(&url, filename);
-        }
         
-        // Convert the b3dm file to a glb file and return that instead
-        let filename_stemmed = Path::new(filename).file_stem().unwrap().to_str().unwrap();
-        let path_glb = PATH_GLB.to_string() + "/" + filename_stemmed + ".glb";
         if !Path::new(&path_glb).exists() {
-            convert_b3dm_to_glb(filename, filename_stemmed);
+            if !Path::new(&path_1_0).exists() {
+                println!("{} is not available locally. Fetching it", filename);
+                let url = TILESET_URL.to_string() + filename + API_KEY;
+                request_and_cache_binary_model_file(&url, filename);
+            }   
+            // Convert the model file to a glb file and return it
+            if filename.contains("cmpt") { convert_cmpt_to_glb(filename_stemmed); } 
+            else { convert_b3dm_to_glb(filename, filename_stemmed); }   
         }
 
         let contents = fs::read(path_glb).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
-        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n",
-            contents.len(),
-        );
-
-        stream.write_all(response.as_bytes()).unwrap();
-        stream.write_all(&contents).unwrap();
-        stream.flush().unwrap(); 
+        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n", contents.len());
+        stream.write_all(response.as_bytes()).unwrap(); stream.write_all(&contents).unwrap(); stream.flush().unwrap(); 
     } else {
         println!("Unknown requested file: {}", filename);
     }
@@ -197,7 +172,7 @@ fn convert_b3dm_to_glb(filename: &str, filename_stemmed: &str) {
             .output()
             .expect("Error when upgrading tileset")
     };
-    println!("Converted {:#?} from cmpt to glb", filename_stemmed);
+    println!("Converted {:#?} from b3dm to glb", filename_stemmed);
 }
 
 fn convert_glb_to_b3dm(filename_stemmed: &str) {
@@ -249,14 +224,14 @@ fn fetch_all_tilesets() {
 }
 
 fn fetch_child_tilesets(result: String) {
-    let re = Regex::new(r"([0-9]+tileset.json|[0-9]+model.cmpt)").unwrap();
+    let re = Regex::new(r"(?<match>[0-9]*tileset.json|[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
     let matches: Vec<_> = re.find_iter(&result).map(|m| m.as_str()).collect();
     for m in matches.iter() {
         let path = PATH_1_0.to_string() + "/" + m;
         if !Path::new(&path).exists() {
             println!("Sending request for {}", m);
             let url = TILESET_URL.to_string() + m + API_KEY;
-            if m.contains("cmpt") {
+            if m.contains("cmpt") || m.contains("b3dm") || m.contains("model") {
                 request_and_cache_binary_model_file(&url, m);
                 continue; 
             }
@@ -266,7 +241,7 @@ fn fetch_child_tilesets(result: String) {
             fetch_child_tilesets(result);
         } else {
             println!("{} already cached locally.", m);
-            if m.contains("cmpt") { continue; }
+            if m.contains("cmpt") || m.contains("b3dm") || m.contains("model") { continue; }
             let result: String = fs::read_to_string(path).expect("Unable to read file");
             fetch_child_tilesets(result);
         }    
@@ -280,15 +255,3 @@ fn request_tileset(req_url: &str) -> String {
     res.read_to_string(&mut body).unwrap();
     return body;
 }
-
-
-// Convert the glb file to a b3dm file and return that instead
-// let path_b3dm = PATH_B3DM.to_string() + "/" + filename_stemmed + ".b3dm";
-// if !Path::new(&path_b3dm).exists() {
-//     convert_glb_to_b3dm(filename_stemmed);
-// }
-
-// let contents = fs::read(path_b3dm).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
-// let response = format!("HTTP/1.0 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
-//     contents.len(),
-// );

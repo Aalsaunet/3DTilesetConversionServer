@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "3d-tiles-tools": "^0.3.2"
+    "3d-tiles-tools": "^0.3.2",
+    "sharp": "^0.33.2"
   }
 }
