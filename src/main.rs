@@ -174,23 +174,23 @@ fn convert_b3dm_to_glb(filename: &str, filename_stemmed: &str) {
     println!("Converted {:#?} from b3dm to glb", filename_stemmed);
 }
 
-fn convert_glb_to_b3dm(filename_stemmed: &str) {
-    // npx 3d-tiles-tools glbToB3dm -i ./specs/data/CesiumTexturedBox/CesiumTexturedBox.glb -o ./output/CesiumTexturedBox.b3dm
-    let cmd = format!("npx 3d-tiles-tools glbToB3dm -i {}/{}.glb -o {}/{}.b3dm", PATH_GLB, &filename_stemmed, PATH_B3DM, &filename_stemmed);
-    let _ = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(["/C", &cmd])
-            .output()
-            .expect("Error when upgrading tileset")
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg(&cmd)
-            .output()
-            .expect("Error when upgrading tileset")
-    };
-    println!("Converted {:#?} from glb to b3dm", filename_stemmed);
-}
+// fn convert_glb_to_b3dm(filename_stemmed: &str) {
+//     // npx 3d-tiles-tools glbToB3dm -i ./specs/data/CesiumTexturedBox/CesiumTexturedBox.glb -o ./output/CesiumTexturedBox.b3dm
+//     let cmd = format!("npx 3d-tiles-tools glbToB3dm -i {}/{}.glb -o {}/{}.b3dm", PATH_GLB, &filename_stemmed, PATH_B3DM, &filename_stemmed);
+//     let _ = if cfg!(target_os = "windows") {
+//         Command::new("cmd")
+//             .args(["/C", &cmd])
+//             .output()
+//             .expect("Error when upgrading tileset")
+//     } else {
+//         Command::new("sh")
+//             .arg("-c")
+//             .arg(&cmd)
+//             .output()
+//             .expect("Error when upgrading tileset")
+//     };
+//     println!("Converted {:#?} from glb to b3dm", filename_stemmed);
+// }
 
 // fn optimize_b3dm(filename_stemmed: &str) {
 //     // npx 3d-tiles-tools optimizeB3dm -i ./specs/data/Textured/batchedTextured.b3dm -o ./output/optimized.b3dm --options --draco.compressMeshes --draco.compressionLevel=9
