@@ -5,10 +5,10 @@ use std::{
     process::Command,
     path::Path
 };
-// use std::io::Cursor;
+
 use regex::Regex;
 use std::fs::File;
-
+use tileset_conversion_server::ThreadPool;
 
 // type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 // use error_chain::error_chain;
@@ -19,25 +19,30 @@ use std::fs::File;
 //     }
 // }
 
+const THREAD_COUNT: usize = 4;
 const TILESET_URL_FULL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/tileset.json?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 const TILESET_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
 const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
-const PATH_1_0: &str = "tmp/1_0"; // "tmp/3DTiles-1_0" for recursive caching, "tmp/1_0" for on-demand
+const PATH_1_0: &str = "tmp/3DTiles-1_0"; // "tmp/3DTiles-1_0" for recursive caching, "tmp/1_0" for on-demand
 const PATH_GLB: &str = "tmp/glb";
-// const PATH_B3DM: &str = "tmp/b3dm";
-
 
 fn main() {
     // Ensure the required 3DTiles-1.0 directory exists
     fs::create_dir_all(PATH_1_0).unwrap();
     fs::create_dir_all(PATH_GLB).unwrap();
-    
+
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
-    for stream in listener.incoming() {
+    let pool = ThreadPool::new(THREAD_COUNT);
+
+    for stream in listener.incoming().take(2) {
         let stream = stream.unwrap();
-        handle_connection(stream);
+        pool.execute(|| {
+            handle_connection(stream);
+        });
     }
+
+    println!("Shutting down.");
 }
 
 fn handle_connection(mut stream: TcpStream) {
