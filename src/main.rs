@@ -1,9 +1,5 @@
 use std::{
-    fs,
-    io::{prelude::*, BufReader, Read},
-    net::{TcpListener, TcpStream},
-    process::Command,
-    path::Path
+    fs, io::{prelude::*, BufReader, Read}, net::{TcpListener, TcpStream}, path::Path, process::Command,
 };
 
 use regex::Regex;
@@ -66,7 +62,8 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
     if !Path::new(&tileset_path).exists() {
         //println!("{} is not available locally. Fetching it", filename);
         let url = TILESERVER_URL.to_string() + filename + API_KEY;
-        request_and_cache_tileset(&url, filename);
+        let was_success = request_and_cache_tileset(&url, filename);
+        if !was_success { return; }
     }
 
     let status_line = "HTTP/1.1 200 OK";
@@ -88,7 +85,8 @@ fn stream_model(mut stream: &TcpStream, filename: &str) {
         if !Path::new(&path_b3dm).exists() {
             //println!("{} is not available locally. Fetching it", filename);
             let url = TILESERVER_URL.to_string() + filename + API_KEY;
-            request_and_cache_binary_model_file(&url, &path_b3dm);
+            let was_success = request_and_cache_binary_model_file(&url, &path_b3dm);
+            if !was_success { return; }
         }   
         // Convert the model file to a glb file and return it
         if filename.contains("cmpt") { convert_cmpt_to_glb(filename_stemmed); } 
@@ -102,28 +100,51 @@ fn stream_model(mut stream: &TcpStream, filename: &str) {
 }
 
 /////// STREAM REQUEST FUNCTIONS ////////
-fn request_and_cache_tileset(req_url: &str, file_name: &str) {
+fn request_and_cache_tileset(req_url: &str, file_name: &str) -> bool {
     // Send request to webatlas and parse response
-    let mut res = reqwest::blocking::get(req_url).unwrap();
+    let Ok(mut response) = reqwest::blocking::get(req_url) else {
+        println!("Failed to fetch from: {}", req_url);
+        return false;
+    };
+
     let mut body = String::new();
-    res.read_to_string(&mut body).unwrap();
-    fs::write(format!("{}/{}", PATH_TILESET_DIR, file_name), &body).expect("Unable to tileset file");
+    if let Err(e) = response.read_to_string(&mut body) {
+        println!("Error when reading response to string: {}", e);
+        return false;
+    };
+
+    if let Err(e) = fs::write(format!("{}/{}", PATH_TILESET_DIR, file_name), &body) {
+        println!("Error when writing tileset to file: {}", e);
+        return false;
+    };
+    
+    return true;
 }
 
-fn request_and_cache_binary_model_file(req_url: &str, target_file_path: &str) {
+fn request_and_cache_binary_model_file(req_url: &str, target_file_path: &str) -> bool {
     // Send request to webatlas and parse response
-    let response = reqwest::blocking::get(req_url).unwrap();
-    let path = Path::new(&target_file_path);
-    
-    let mut file = match File::create(&path) {
-        Ok(file) => file,
-        Err(_) => return, //panic!("Couldn't create {}", why),
+    let Ok(response) = reqwest::blocking::get(req_url) else {
+        println!("Failed to fetch from: {}", req_url);
+        return false;
     };
 
-    let content =  response.bytes().unwrap();
+    let mut file = match File::create(Path::new(&target_file_path)) {
+        Ok(file) => file,
+        Err(_) => return false, //panic!("Couldn't create {}", why),
+    };
+
+    // let content =  response.bytes().expect("Failed to unwrap bytes from the response");
+    let Ok(content) = response.bytes() else {
+        println!("Failed to unwrap bytes from the response:");
+        return false;
+    };
+
     if let Err(e) = file.write_all(&content) {
         println!("Error when writing model to file: {}", e);
+        return false;
     };
+
+    return true;
 }
 
 /////// CONVERSION FUNCTIONS ////////
