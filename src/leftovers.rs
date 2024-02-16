@@ -61,6 +61,49 @@
 
     // stream_tileset(&stream, &caps["match"]);
 
+    // fn stream_tileset(mut stream: &TcpStream, filename: &str) {
+    //     let path_1_0 = PATH_TILESET_DIR.to_string() + "/" + filename;
+    
+    //     if filename.contains("tileset.json") {
+    //         if !Path::new(&path_1_0).exists() {
+    //             println!("{} is not available locally. Fetching it", filename);
+    //             let url = TILESET_URL.to_string() + filename + API_KEY;
+    //             request_and_cache_tileset(&url, filename);
+    //         }
+    
+    //         let status_line = "HTTP/1.1 200 OK";
+    //         let contents = fs::read_to_string(&path_1_0).expect("Unable to read file");
+    //         let length: usize = contents.len();
+    //         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+        
+    //         if let Err(e) = stream.write_all(response.as_bytes()) {
+    //             println!("Error when streaming tileset: {}", e);
+    //         }; 
+    //     } else if filename.contains("model") { // Assume suffixless model is a b3dm 
+    //         let filename_stemmed = Path::new(filename).file_stem().unwrap().to_str().unwrap();
+    //         let path_glb = PATH_GLB_DIR.to_string() + "/" + filename_stemmed + ".glb";
+            
+    //         if !Path::new(&path_glb).exists() {
+    //             if !Path::new(&path_1_0).exists() {
+    //                 println!("{} is not available locally. Fetching it", filename);
+    //                 let url = TILESET_URL.to_string() + filename + API_KEY;
+    //                 request_and_cache_binary_model_file(&url, filename);
+    //             }   
+    //             // Convert the model file to a glb file and return it
+    //             if filename.contains("cmpt") { convert_cmpt_to_glb(filename_stemmed); } 
+    //             else { convert_b3dm_to_glb(filename, filename_stemmed); }   
+    //         }
+    
+    //         let contents = fs::read(path_glb).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
+    //         let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n", contents.len());
+    //         stream.write_all(response.as_bytes()).unwrap(); stream.write_all(&contents).unwrap(); stream.flush().unwrap(); 
+    //     } else {
+    //         println!("Unknown requested file: {}", filename);
+    //     }
+    //     println!("Sent {:#?} to Unity", filename);
+    // }
+
+
 /////// DOWNLOAD EVERYTHING FUNCTIONS ////////
 const TILESET_URL_FULL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/tileset.json?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 fn fetch_all_tilesets() {
