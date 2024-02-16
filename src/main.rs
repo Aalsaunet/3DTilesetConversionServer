@@ -27,14 +27,13 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").expect("Failed to bind TcpListener");
     let pool = ThreadPool::new(num_cpus::get());
 
-    for stream in listener.incoming().take(2) {
-        let stream = stream.unwrap();
+    for stream in listener.incoming() {
+        let stream = stream.expect("Failed to unwrap TcpStream");
         pool.execute(|| {
             handle_connection(stream);
         });
     }
-
-    println!("Shutting down.");
+    println!("Shutting down server.");
 }
 
 fn handle_connection(mut stream: TcpStream) {
@@ -42,23 +41,20 @@ fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
     let http_request: Vec<_> = buf_reader
         .lines()
-        .map(|result| result.unwrap())
+        .map(|result| result.expect("Failed to unwrap http_request result"))
         .take_while(|line| !line.is_empty())
         .collect();
     // println!("Request from Unity: {:#?}", http_request.first().unwrap());
-
-
     
-    // Create response back to Unity
-    let request_path = http_request.first().unwrap();
-    let re = Regex::new(r"(?<match>[0-9]*tileset.json|[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
-    let Some(caps) = re.captures(request_path) else {
-        println!("No match found for request!");
-        return;
+    let request_path = http_request.first().expect("Failed to unwrap http_request path");
+    let re = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
+    match re.captures(request_path) {
+        Some(caps) => {
+            if caps.name("tileset").is_some() {stream_tileset(&stream, &caps["tileset"])}
+            else {stream_tileset(&stream, &caps["model"])}
+        }
+        None => return,
     };
-
-    stream_tileset(&stream, &caps["match"]);
-    // println!("Done!")
 }
 
 /////// RESPONSE FUNCTIONS ////////

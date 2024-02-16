@@ -54,6 +54,13 @@
 //     println!("Converted {:#?} from glb to b3dm", filename_stemmed);
 // }
 
+    // let Some(caps) = re.captures(request_path) else {
+    //     println!("No match found for request!");
+    //     return;
+    // };
+
+    // stream_tileset(&stream, &caps["match"]);
+
 /////// DOWNLOAD EVERYTHING FUNCTIONS ////////
 const TILESET_URL_FULL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/tileset.json?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 fn fetch_all_tilesets() {
