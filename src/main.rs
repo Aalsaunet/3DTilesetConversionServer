@@ -66,8 +66,12 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
         if !was_success { return; }
     }
 
+    let Ok(contents) = fs::read_to_string(&tileset_path) else {
+        println!("Unable to read file {}", &tileset_path);
+        return;
+    };
+
     let status_line = "HTTP/1.1 200 OK";
-    let contents = fs::read_to_string(&tileset_path).expect("Unable to read file");
     let length: usize = contents.len();
     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
 
@@ -93,9 +97,26 @@ fn stream_model(mut stream: &TcpStream, filename: &str) {
         else { convert_b3dm_to_glb(filename, filename_stemmed); }   
     }
 
-    let contents = fs::read(path_glb).expect("Unable to read file");  //MIME type: model/gltf-binary or application/octet-stream
+    //MIME type: model/gltf-binary or application/octet-stream
+    let Ok(contents) = fs::read(&path_glb) else {
+        println!("Unable to read file {}", &path_glb);
+        return;
+    };
+
     let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n", contents.len());
-    stream.write_all(response.as_bytes()).unwrap(); stream.write_all(&contents).unwrap(); stream.flush().unwrap();  
+    
+    if let Err(e) = stream.write_all(response.as_bytes()) {
+        println!("Error when streaming model: {}", e); return;
+    }; 
+
+    if let Err(e) = stream.write_all(&contents) {
+        println!("Error when streaming model: {}", e); return;
+    };
+
+    if let Err(_) = stream.flush() {
+        println!("Error when flushing"); return;
+    }; 
+    
     //println!("Sent {:#?} to Unity", filename);
 }
 
@@ -117,7 +138,7 @@ fn request_and_cache_tileset(req_url: &str, file_name: &str) -> bool {
         println!("Error when writing tileset to file: {}", e);
         return false;
     };
-    
+
     return true;
 }
 
