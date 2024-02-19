@@ -1,8 +1,9 @@
 use std::{
-    fs, io::{prelude::*, BufReader, Read}, net::{TcpListener, TcpStream}, path::Path, process::Command,
+    fs, io::{prelude::*, Read}, net::{TcpListener, TcpStream}, path::Path, process::Command, str::from_utf8,
 };
 
 use regex::Regex;
+use reqwest::blocking::Client;
 use std::fs::File;
 use tileset_conversion_server::ThreadPool;
 use num_cpus;
@@ -25,44 +26,43 @@ fn main() {
 
     for stream in listener.incoming() {
         let stream = stream.expect("Failed to unwrap TcpStream");
-        pool.execute(|| {
-            handle_connection(stream);
-        });
+        let client = reqwest::blocking::Client::new();
+        handle_connection(stream, client);
+        // pool.execute(|| {
+        //     handle_connection(stream, client);
+        // });
     }
     println!("Shutting down server.");
 }
 
-fn handle_connection(mut stream: TcpStream) {
-    // Parse received request from Unity
-    let buf_reader = BufReader::new(&mut stream);
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.expect("Failed to unwrap http_request result"))
-        .take_while(|line| !line.is_empty())
-        .collect();
-    
-    let Some(request_path) = http_request.first() else {
-        println!("Failed to unwrap request from Unity: {:#?}", http_request);
-        return;
+fn handle_connection(mut stream: TcpStream, client: Client) {
+    let mut buffer = [0; 1024];
+    if let Err(e) = stream.read(&mut buffer){
+        println!("Error when reading request header from stream: {}", e); return;
+    };
+
+    let request_path = match from_utf8(&buffer) {
+        Ok(v) => v,
+        Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); return; },
     };
 
     let re = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
     match re.captures(request_path) {
         Some(caps) => {
-            if caps.name("tileset").is_some() {stream_tileset(&stream, &caps["tileset"])}
-            else {stream_model(&stream, &caps["model"])}
+            if caps.name("tileset").is_some() {stream_tileset(&stream, &client, &caps["tileset"])}
+            else {stream_model(&stream, &client, &caps["model"])}
         }
         None => return,
     };
 }
 
 /////// RESPONSE FUNCTIONS ////////
-fn stream_tileset(mut stream: &TcpStream, filename: &str) {
+fn stream_tileset(mut stream: &TcpStream, client: &Client, filename: &str) {
     let tileset_path = PATH_TILESET_DIR.to_string() + "/" + filename;
     let contents: String = 
         if !Path::new(&tileset_path).exists() {
             let url = TILESERVER_URL.to_string() + filename + API_KEY; //println!("{} is not available locally. Fetching it", filename);
-            let Ok(c) = request_and_cache_tileset(&url, filename) else {
+            let Ok(c) = request_and_cache_tileset(client, &url, filename) else {
                 println!("Unable to fetch file {}", &tileset_path);
                 return;
             }; 
@@ -85,7 +85,7 @@ fn stream_tileset(mut stream: &TcpStream, filename: &str) {
     //println!("Sent {:#?} to Unity", filename);
 }
 
-fn stream_model(mut stream: &TcpStream, filename: &str) {
+fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
     let filename_stemmed = Path::new(filename).file_stem().unwrap().to_str().unwrap();
     let path_b3dm = PATH_B3DM_DIR.to_string() + "/" + filename_stemmed + ".b3dm";
     let path_glb = PATH_GLB_DIR.to_string() + "/" + filename_stemmed + ".glb";
@@ -93,7 +93,7 @@ fn stream_model(mut stream: &TcpStream, filename: &str) {
         if !Path::new(&path_b3dm).exists() {
             //println!("{} is not available locally. Fetching it", filename);
             let url = TILESERVER_URL.to_string() + filename + API_KEY;
-            let was_success = request_and_cache_binary_model_file(&url, &path_b3dm);
+            let was_success = request_and_cache_binary_model_file(client, &url, &path_b3dm);
             if !was_success { return; }
         }   
         // Convert the model file to a glb file and return it
@@ -125,9 +125,10 @@ fn stream_model(mut stream: &TcpStream, filename: &str) {
 }
 
 /////// STREAM REQUEST FUNCTIONS ////////
-fn request_and_cache_tileset(req_url: &str, file_name: &str) -> Result<String, String> {
+fn request_and_cache_tileset(client: &Client, req_url: &str, file_name: &str) -> Result<String, String> {
     // Send request to webatlas and parse response
-    let Ok(mut response) = reqwest::blocking::get(req_url) else {
+    
+    let Ok(mut response) = client.get(req_url).send() else {
         return Err(format!("Failed to fetch from: {}", req_url));
     };
 
@@ -143,9 +144,9 @@ fn request_and_cache_tileset(req_url: &str, file_name: &str) -> Result<String, S
     return Ok(body);
 }
 
-fn request_and_cache_binary_model_file(req_url: &str, target_file_path: &str) -> bool {
+fn request_and_cache_binary_model_file(client: &Client, req_url: &str, target_file_path: &str) -> bool {
     // Send request to webatlas and parse response
-    let Ok(response) = reqwest::blocking::get(req_url) else {
+    let Ok(response) = client.get(req_url).send() else {
         println!("Failed to fetch from: {}", req_url);
         return false;
     };

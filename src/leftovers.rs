@@ -8,6 +8,19 @@
 //     }
 // }
 
+// Parse received request from Unity
+// let buf_reader = BufReader::new(&mut stream);
+// let http_request: Vec<_> = buf_reader
+//     .lines()
+//     .map(|result| result.expect("Failed to unwrap http_request result"))
+//     .take_while(|line| !line.is_empty())
+//     .collect();
+
+// let Some(request_path) = http_request.first() else {
+//     println!("Failed to unwrap request from Unity: {:#?}", http_request);
+//     return;
+// };
+
 // Request tilesets from remote server
 // fetch_all_tilesets();
 
