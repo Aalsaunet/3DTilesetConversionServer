@@ -1,5 +1,5 @@
 use std::{
-    fs, io::{prelude::*, Read}, net::{TcpListener, TcpStream}, path::Path, process::Command, str::from_utf8,
+    fs, io::{prelude::*, BufReader, Read}, net::{TcpListener, TcpStream}, path::Path, process::Command, str::from_utf8,
 };
 
 use regex::Regex;
@@ -21,7 +21,7 @@ fn main() {
     fs::create_dir_all(PATH_B3DM_DIR).expect(format!("Couldn't create required dir {}", PATH_B3DM_DIR).as_str());
     fs::create_dir_all(PATH_GLB_DIR).expect(format!("Couldn't create required dir {}", PATH_GLB_DIR).as_str());
 
-    let listener = TcpListener::bind("127.0.0.1:7878").expect("Failed to bind TcpListener");
+    let listener = TcpListener::bind("10.0.0.3:7878").expect("Failed to bind TcpListener");
     // let pool = ThreadPool::new(num_cpus::get());
     let client = reqwest::blocking::Client::new();
 
@@ -36,14 +36,26 @@ fn main() {
 }
 
 fn handle_connection(mut stream: TcpStream, client: &Client) {
-    let mut buffer = [0; 1024];
-    if let Err(e) = stream.read(&mut buffer){
-        println!("Error when reading request header from stream: {}", e); return;
-    };
+    // let mut buffer = [0; 1024];
+    // if let Err(e) = stream.read(&mut buffer){
+    //     println!("Error when reading request header from stream: {}", e); return;
+    // };
 
-    let request_path = match from_utf8(&buffer) {
-        Ok(v) => v,
-        Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); return; },
+    // let request_path = match from_utf8(&buffer) {
+    //     Ok(v) => v,
+    //     Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); return; },
+    // };
+
+    let buf_reader = BufReader::new(&mut stream);
+    let http_request: Vec<_> = buf_reader
+        .lines()
+        .map(|result| result.expect("Failed to unwrap http_request result"))
+        .take_while(|line| !line.is_empty())
+        .collect();
+
+    let Some(request_path) = http_request.first() else {
+        println!("Failed to unwrap request from Unity: {:#?}", http_request);
+        return;
     };
 
     let re = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
