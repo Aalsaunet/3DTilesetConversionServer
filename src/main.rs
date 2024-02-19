@@ -5,8 +5,8 @@ use std::{
 use regex::Regex;
 use reqwest::blocking::Client;
 use std::fs::File;
-use tileset_conversion_server::ThreadPool;
-use num_cpus;
+// use tileset_conversion_server::ThreadPool;
+// use num_cpus;
 
 const TILESERVER_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
 const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
@@ -22,12 +22,12 @@ fn main() {
     fs::create_dir_all(PATH_GLB_DIR).expect(format!("Couldn't create required dir {}", PATH_GLB_DIR).as_str());
 
     let listener = TcpListener::bind("127.0.0.1:7878").expect("Failed to bind TcpListener");
-    let pool = ThreadPool::new(num_cpus::get());
+    // let pool = ThreadPool::new(num_cpus::get());
+    let client = reqwest::blocking::Client::new();
 
     for stream in listener.incoming() {
         let stream = stream.expect("Failed to unwrap TcpStream");
-        let client = reqwest::blocking::Client::new();
-        handle_connection(stream, client);
+        handle_connection(stream, &client);
         // pool.execute(|| {
         //     handle_connection(stream, client);
         // });
@@ -35,7 +35,7 @@ fn main() {
     println!("Shutting down server.");
 }
 
-fn handle_connection(mut stream: TcpStream, client: Client) {
+fn handle_connection(mut stream: TcpStream, client: &Client) {
     let mut buffer = [0; 1024];
     if let Err(e) = stream.read(&mut buffer){
         println!("Error when reading request header from stream: {}", e); return;
