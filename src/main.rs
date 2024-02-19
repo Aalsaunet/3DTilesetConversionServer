@@ -36,27 +36,27 @@ fn main() {
 }
 
 fn handle_connection(mut stream: TcpStream, client: &Client) {
-    // let mut buffer = [0; 1024];
-    // if let Err(e) = stream.read(&mut buffer){
-    //     println!("Error when reading request header from stream: {}", e); return;
-    // };
-
-    // let request_path = match from_utf8(&buffer) {
-    //     Ok(v) => v,
-    //     Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); return; },
-    // };
-
-    let buf_reader = BufReader::new(&mut stream);
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.expect("Failed to unwrap http_request result"))
-        .take_while(|line| !line.is_empty())
-        .collect();
-
-    let Some(request_path) = http_request.first() else {
-        println!("Failed to unwrap request from Unity: {:#?}", http_request);
-        return;
+    let mut buffer = [0; 1024];
+    if let Err(e) = stream.read(&mut buffer){
+        println!("Error when reading request header from stream: {}", e); return;
     };
+
+    let request_path = match from_utf8(&buffer) {
+        Ok(v) => v,
+        Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); return; },
+    };
+
+    // let buf_reader = BufReader::new(&mut stream);
+    // let http_request: Vec<_> = buf_reader
+    //     .lines()
+    //     .map(|result| result.expect("Failed to unwrap http_request result"))
+    //     .take_while(|line| !line.is_empty())
+    //     .collect();
+
+    // let Some(request_path) = http_request.first() else {
+    //     println!("Failed to unwrap request from Unity: {:#?}", http_request);
+    //     return;
+    // };
 
     let re = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
     match re.captures(request_path) {
