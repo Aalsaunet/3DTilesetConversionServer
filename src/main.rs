@@ -65,12 +65,14 @@ fn stream_tileset(mut stream: &TcpStream, client: &Client, filename: &str) {
             let url = TILESERVER_URL.to_string() + filename + API_KEY; 
             let Ok(c) = request_and_cache_tileset(client, &url, filename) else {
                 println!("Unable to fetch file {}", &tileset_path);
+                not_found_response(&stream);
                 return;
             }; 
             c
         } else {
             let Ok(c) = fs::read_to_string(&tileset_path) else {
                 println!("Unable to read file {}", &tileset_path);
+                not_found_response(&stream);
                 return;
             }; 
             c
@@ -82,6 +84,7 @@ fn stream_tileset(mut stream: &TcpStream, client: &Client, filename: &str) {
 
     if let Err(e) = stream.write_all(response.as_bytes()) {
         println!("Error when streaming tileset: {}", e);
+        not_found_response(&stream);
     }; 
 
     if let Err(e) = stream.flush() {
@@ -99,7 +102,10 @@ fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
             //println!("{} is not available locally. Fetching it", filename);
             let url = TILESERVER_URL.to_string() + filename + API_KEY;
             let was_success = request_and_cache_binary_model_file(client, &url, &path_b3dm);
-            if !was_success { return; }
+            if !was_success {
+                not_found_response(&stream);
+                return; 
+            }
         }   
         // Convert the model file to a glb file and return it
         if filename.contains("cmpt") { convert_cmpt_to_glb(filename_stemmed); } 
@@ -109,17 +115,22 @@ fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
     //MIME type: model/gltf-binary or application/octet-stream
     let Ok(contents) = fs::read(&path_glb) else {
         println!("Unable to read file {}", &path_glb);
+        not_found_response(&stream);
         return;
     };
 
     let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n", contents.len());
     
     if let Err(e) = stream.write_all(response.as_bytes()) {
-        println!("Error when streaming model: {}", e); return;
+        println!("Error when streaming model: {}", e); 
+        not_found_response(&stream);
+        return;
     }; 
 
     if let Err(e) = stream.write_all(&contents) {
-        println!("Error when streaming model: {}", e); return;
+        println!("Error when streaming model: {}", e); 
+        not_found_response(&stream);
+        return;
     };
 
     if let Err(_) = stream.flush() {
