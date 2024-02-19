@@ -27,7 +27,7 @@ fn main() {
     for stream in listener.incoming() {
         let stream = stream.expect("Failed to unwrap TcpStream");
         let client = reqwest::blocking::Client::new();
-        handle_connection(stream, client);
+        handle_connection(&pool, stream, client);
         // pool.execute(|| {
         //     handle_connection(stream, client);
         // });
@@ -35,22 +35,37 @@ fn main() {
     println!("Shutting down server.");
 }
 
-fn handle_connection(mut stream: TcpStream, client: Client) {
-    let mut buffer = [0; 1024];
-    if let Err(e) = stream.read(&mut buffer){
-        println!("Error when reading request header from stream: {}", e); return;
+fn handle_connection(pool: &ThreadPool, mut stream: TcpStream, client: Client) {
+    static mut buffer: [u8; 1024] = [0; 1024];
+    if let Err(e) = unsafe {stream.read(&mut buffer)}{
+        println!("Error when reading request header from stream: {}", e); 
+        return;
     };
+    
+    // let request_path = unsafe { match from_utf8(&buffer) } {
+    //     Ok(v) => v,
+    //     Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); return; },
+    // };
+    let request_path: String;
+    unsafe {
+        match from_utf8(&buffer) {
+            Ok(v) => request_path = v.to_string(),
+            Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); return; },
+        };
+    }
+    
 
-    let request_path = match from_utf8(&buffer) {
-        Ok(v) => v,
-        Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); return; },
-    };
+    //drop(&buffer);
 
     let re = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
     match re.captures(request_path) {
         Some(caps) => {
-            if caps.name("tileset").is_some() {stream_tileset(&stream, &client, &caps["tileset"])}
-            else {stream_model(&stream, &client, &caps["model"])}
+            if caps.name("tileset").is_some() {
+                pool.execute(move || { stream_tileset(&stream, &client, &caps["tileset"]); });
+            }
+            else {
+                pool.execute(move || { stream_model(&stream, &client, &caps["model"]); });
+            }
         }
         None => return,
     };
