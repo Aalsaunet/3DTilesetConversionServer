@@ -59,17 +59,21 @@ fn handle_connection(mut stream: TcpStream) {
 /////// RESPONSE FUNCTIONS ////////
 fn stream_tileset(mut stream: &TcpStream, filename: &str) {
     let tileset_path = PATH_TILESET_DIR.to_string() + "/" + filename;
-    if !Path::new(&tileset_path).exists() {
-        //println!("{} is not available locally. Fetching it", filename);
-        let url = TILESERVER_URL.to_string() + filename + API_KEY;
-        let was_success = request_and_cache_tileset(&url, filename);
-        if !was_success { return; }
-    }
-
-    let Ok(contents) = fs::read_to_string(&tileset_path) else {
-        println!("Unable to read file {}", &tileset_path);
-        return;
-    };
+    let contents: String = 
+        if !Path::new(&tileset_path).exists() {
+            let url = TILESERVER_URL.to_string() + filename + API_KEY; //println!("{} is not available locally. Fetching it", filename);
+            let Ok(c) = request_and_cache_tileset(&url, filename) else {
+                println!("Unable to fetch file {}", &tileset_path);
+                return;
+            }; 
+            c
+        } else {
+            let Ok(c) = fs::read_to_string(&tileset_path) else {
+                println!("Unable to read file {}", &tileset_path);
+                return;
+            }; 
+            c
+        };
 
     let status_line = "HTTP/1.1 200 OK";
     let length: usize = contents.len();
@@ -121,25 +125,22 @@ fn stream_model(mut stream: &TcpStream, filename: &str) {
 }
 
 /////// STREAM REQUEST FUNCTIONS ////////
-fn request_and_cache_tileset(req_url: &str, file_name: &str) -> bool {
+fn request_and_cache_tileset(req_url: &str, file_name: &str) -> Result<String, String> {
     // Send request to webatlas and parse response
     let Ok(mut response) = reqwest::blocking::get(req_url) else {
-        println!("Failed to fetch from: {}", req_url);
-        return false;
+        return Err(format!("Failed to fetch from: {}", req_url));
     };
 
     let mut body = String::new();
     if let Err(e) = response.read_to_string(&mut body) {
-        println!("Error when reading response to string: {}", e);
-        return false;
+        return Err(format!("Error when reading response to string: {}", e));
     };
 
     if let Err(e) = fs::write(format!("{}/{}", PATH_TILESET_DIR, file_name), &body) {
-        println!("Error when writing tileset to file: {}", e);
-        return false;
+        return Err(format!("Error when writing tileset to file: {}", e));
     };
 
-    return true;
+    return Ok(body);
 }
 
 fn request_and_cache_binary_model_file(req_url: &str, target_file_path: &str) -> bool {
