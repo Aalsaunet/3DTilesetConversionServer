@@ -82,7 +82,7 @@ fn stream_tileset(mut stream: &TcpStream, client: &Client, filename: &str) {
     if let Err(e) = stream.write_all(response.as_bytes()) {
         println!("Error when streaming tileset: {}", e);
     }; 
-    //println!("Sent {:#?} to Unity", filename);
+    println!("Sent {:#?} to Unity", filename);
 }
 
 fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
@@ -91,7 +91,7 @@ fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
     let path_glb = PATH_GLB_DIR.to_string() + "/" + filename_stemmed + ".glb";
     if !Path::new(&path_glb).exists() {
         if !Path::new(&path_b3dm).exists() {
-            //println!("{} is not available locally. Fetching it", filename);
+            println!("{} is not available locally. Fetching it", filename);
             let url = TILESERVER_URL.to_string() + filename + API_KEY;
             let was_success = request_and_cache_binary_model_file(client, &url, &path_b3dm);
             if !was_success { return; }
@@ -121,7 +121,7 @@ fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
         println!("Error when flushing"); return;
     }; 
     
-    //println!("Sent {:#?} to Unity", filename);
+    println!("Sent {:#?} to Unity", filename);
 }
 
 /////// STREAM REQUEST FUNCTIONS ////////
