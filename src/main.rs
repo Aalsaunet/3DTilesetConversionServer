@@ -21,15 +21,15 @@ fn main() {
     fs::create_dir_all(PATH_B3DM_DIR).expect(format!("Couldn't create required dir {}", PATH_B3DM_DIR).as_str());
     fs::create_dir_all(PATH_GLB_DIR).expect(format!("Couldn't create required dir {}", PATH_GLB_DIR).as_str());
 
-    let listener = TcpListener::bind("127.0.0.1:7878").expect("Failed to bind TcpListener");
+    let listener = TcpListener::bind("192.168.1.2:7878").expect("Failed to bind TcpListener");
     // let pool = ThreadPool::new(num_cpus::get());
     let client = reqwest::blocking::Client::new();
 
     for stream in listener.incoming() {
         let stream = stream.expect("Failed to unwrap TcpStream");
         handle_connection(stream, &client);
-        // pool.execute(|| {
-        //     handle_connection(stream, client);
+        // pool.execute(move || {
+        //     handle_connection(stream, &client);
         // });
     }
     println!("Shutting down server.");
@@ -52,7 +52,7 @@ fn handle_connection(mut stream: TcpStream, client: &Client) {
             if caps.name("tileset").is_some() {stream_tileset(&stream, &client, &caps["tileset"])}
             else {stream_model(&stream, &client, &caps["model"])}
         }
-        None => return,
+        None => not_found_response(&stream),
     };
 }
 
@@ -61,7 +61,8 @@ fn stream_tileset(mut stream: &TcpStream, client: &Client, filename: &str) {
     let tileset_path = PATH_TILESET_DIR.to_string() + "/" + filename;
     let contents: String = 
         if !Path::new(&tileset_path).exists() {
-            let url = TILESERVER_URL.to_string() + filename + API_KEY; //println!("{} is not available locally. Fetching it", filename);
+            //println!("{} is not available locally. Fetching it", filename);
+            let url = TILESERVER_URL.to_string() + filename + API_KEY; 
             let Ok(c) = request_and_cache_tileset(client, &url, filename) else {
                 println!("Unable to fetch file {}", &tileset_path);
                 return;
@@ -82,6 +83,10 @@ fn stream_tileset(mut stream: &TcpStream, client: &Client, filename: &str) {
     if let Err(e) = stream.write_all(response.as_bytes()) {
         println!("Error when streaming tileset: {}", e);
     }; 
+
+    if let Err(e) = stream.flush() {
+        println!("Error when flushing: {}", e);
+    };
     //println!("Sent {:#?} to Unity", filename);
 }
 
@@ -168,6 +173,24 @@ fn request_and_cache_binary_model_file(client: &Client, req_url: &str, target_fi
     };
 
     return true;
+}
+
+fn not_found_response(mut stream: &TcpStream) {
+    // let contents = fs::read_to_string(filename).unwrap();
+    let response = format!(
+        "{}\r\nContent-Length: {}\r\n\r\n{}",
+        "HTTP/1.1 404 NOT FOUND",
+        0,
+        ""
+    );
+
+    if let Err(e) = stream.write_all(response.as_bytes()) {
+        println!("Error when responding with a 404: {}", e);
+    };
+
+    if let Err(e) = stream.flush() {
+        println!("Error when flushing: {}", e);
+    };
 }
 
 /////// CONVERSION FUNCTIONS ////////
