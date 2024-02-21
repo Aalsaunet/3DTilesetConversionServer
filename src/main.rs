@@ -15,22 +15,23 @@ const PATH_TILESET_DIR: &str = "tmp/tilesets";
 const PATH_B3DM_DIR: &str = "tmp/b3dms";
 const PATH_GLB_DIR: &str = "tmp/glbs";
 
+const THREADS_PER_CPU: usize = 6; 
+
 fn main() {
-    // Ensure the required 3DTiles-1.0 directory exists
+    // Ensure the required directories exists
     fs::create_dir_all(PATH_TILESET_DIR).expect(format!("Couldn't create required dir {}", PATH_TILESET_DIR).as_str());
     fs::create_dir_all(PATH_B3DM_DIR).expect(format!("Couldn't create required dir {}", PATH_B3DM_DIR).as_str());
     fs::create_dir_all(PATH_GLB_DIR).expect(format!("Couldn't create required dir {}", PATH_GLB_DIR).as_str());
-    const THREADS_PER_CPU: usize = 6; 
-
+    
+    let thread_count = num_cpus::get() * THREADS_PER_CPU;
+    let pool = ThreadPool::new(thread_count);
     let hostname = format!("{}:7878", get_hostname()); // e.g 192.168.1.2:7878
     let listener = TcpListener::bind(&hostname).expect("Failed to bind TcpListener");
-    let pool = ThreadPool::new(num_cpus::get() * THREADS_PER_CPU);
-    println!("Started 3DTiles Conversion Server with {} threads listening on {}...", num_cpus::get(), &hostname);
+    println!("Started 3DTiles Conversion Server with {} threads listening on {}...", thread_count, &hostname);
 
     for stream in listener.incoming() {
         let stream = stream.expect("Failed to unwrap TcpStream");
         let client = reqwest::blocking::Client::new();
-        // handle_connection(stream, &client);
         pool.execute(|| {
             handle_connection(stream, client);
         });
@@ -144,9 +145,7 @@ fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
 }
 
 /////// STREAM REQUEST FUNCTIONS ////////
-fn request_and_cache_tileset(client: &Client, req_url: &str, file_name: &str) -> Result<String, String> {
-    // Send request to webatlas and parse response
-    
+fn request_and_cache_tileset(client: &Client, req_url: &str, file_name: &str) -> Result<String, String> {    
     let Ok(mut response) = client.get(req_url).send() else {
         return Err(format!("Failed to fetch from: {}", req_url));
     };
@@ -164,7 +163,6 @@ fn request_and_cache_tileset(client: &Client, req_url: &str, file_name: &str) ->
 }
 
 fn request_and_cache_binary_model_file(client: &Client, req_url: &str, target_file_path: &str) -> bool {
-    // Send request to webatlas and parse response
     let Ok(response) = client.get(req_url).send() else {
         println!("Failed to fetch from: {}", req_url);
         return false;
@@ -172,10 +170,9 @@ fn request_and_cache_binary_model_file(client: &Client, req_url: &str, target_fi
 
     let mut file = match File::create(Path::new(&target_file_path)) {
         Ok(file) => file,
-        Err(_) => return false, //panic!("Couldn't create {}", why),
+        Err(_) => return false,
     };
 
-    // let content =  response.bytes().expect("Failed to unwrap bytes from the response");
     let Ok(content) = response.bytes() else {
         println!("Failed to unwrap bytes from the response:");
         return false;
@@ -237,7 +234,6 @@ fn get_hostname() -> String {
 
 fn convert_cmpt_to_glb(filename_stemmed: &str) {
     // npx 3d-tiles-tools cmptToGlb -i ./specs/data/composite.cmpt -o ./output/extracted.glb
-    // let cmd = format!("npx 3d-tiles-tools cmptToGlb -i {}/{}.cmpt -o {}/{}.glb", PATH_TILESET_DIR, &filename_stemmed, PATH_GLB_DIR, &filename_stemmed);
     let cmd = format!("npx 3d-tiles-tools cmptToGlb -i {}/{}.b3dm -o {}/{}.glb", PATH_B3DM_DIR, &filename_stemmed, PATH_GLB_DIR, &filename_stemmed);
     let _ = if cfg!(target_os = "windows") {
         Command::new("cmd")
@@ -251,7 +247,6 @@ fn convert_cmpt_to_glb(filename_stemmed: &str) {
             .output()
             .expect("Error when upgrading tileset")
     };
-    // println!("Converted {:#?} from cmpt to glb", filename_stemmed);
 }
 
 fn convert_b3dm_to_glb(filename: &str, filename_stemmed: &str) {
@@ -269,5 +264,4 @@ fn convert_b3dm_to_glb(filename: &str, filename_stemmed: &str) {
             .output()
             .expect("Error when upgrading tileset")
     };
-    // println!("Converted {:#?} from b3dm to glb", filename_stemmed);
 }
