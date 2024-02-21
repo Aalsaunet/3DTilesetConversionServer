@@ -1,12 +1,12 @@
 use std::{
-    fs, io::{prelude::*, Read}, net::{TcpListener, TcpStream}, path::Path, process::Command, str::from_utf8,
+    fs, io::{prelude::*, Read}, net::{TcpListener, TcpStream}, path::Path, process::{Command, Stdio}, str::from_utf8,
 };
 
 use regex::Regex;
 use reqwest::blocking::Client;
 use std::fs::File;
-// use tileset_conversion_server::ThreadPool;
-// use num_cpus;
+use tileset_conversion_server::ThreadPool;
+use num_cpus;
 
 const TILESERVER_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
 const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
@@ -21,21 +21,23 @@ fn main() {
     fs::create_dir_all(PATH_B3DM_DIR).expect(format!("Couldn't create required dir {}", PATH_B3DM_DIR).as_str());
     fs::create_dir_all(PATH_GLB_DIR).expect(format!("Couldn't create required dir {}", PATH_GLB_DIR).as_str());
 
-    let listener = TcpListener::bind("192.168.1.2:7878").expect("Failed to bind TcpListener");
-    // let pool = ThreadPool::new(num_cpus::get());
-    let client = reqwest::blocking::Client::new();
+    let hostname = format!("{}:7878", get_hostname()); // e.g 192.168.1.2:7878
+    let listener = TcpListener::bind(&hostname).expect("Failed to bind TcpListener");
+    let pool = ThreadPool::new(num_cpus::get());
+    println!("Started 3DTiles Conversion Server with {} threads listening on {}...", num_cpus::get(), &hostname);
 
     for stream in listener.incoming() {
         let stream = stream.expect("Failed to unwrap TcpStream");
-        handle_connection(stream, &client);
-        // pool.execute(move || {
-        //     handle_connection(stream, &client);
-        // });
+        let client = reqwest::blocking::Client::new();
+        // handle_connection(stream, &client);
+        pool.execute(|| {
+            handle_connection(stream, client);
+        });
     }
     println!("Shutting down server.");
 }
 
-fn handle_connection(mut stream: TcpStream, client: &Client) {
+fn handle_connection(mut stream: TcpStream, client: Client) {
     let mut buffer = [0; 1024];
     if let Err(e) = stream.read(&mut buffer){
         println!("Error when reading request header from stream: {}", e); return;
@@ -61,7 +63,7 @@ fn stream_tileset(mut stream: &TcpStream, client: &Client, filename: &str) {
     let tileset_path = PATH_TILESET_DIR.to_string() + "/" + filename;
     let contents: String = 
         if !Path::new(&tileset_path).exists() {
-            //println!("{} is not available locally. Fetching it", filename);
+            println!("{} is not available locally. Fetching it", filename);
             let url = TILESERVER_URL.to_string() + filename + API_KEY; 
             let Ok(c) = request_and_cache_tileset(client, &url, filename) else {
                 println!("Unable to fetch file {}", &tileset_path);
@@ -90,7 +92,7 @@ fn stream_tileset(mut stream: &TcpStream, client: &Client, filename: &str) {
     if let Err(e) = stream.flush() {
         println!("Error when flushing: {}", e);
     };
-    //println!("Sent {:#?} to Unity", filename);
+    println!("Streamed tileset {:#?}", filename);
 }
 
 fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
@@ -99,7 +101,7 @@ fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
     let path_glb = PATH_GLB_DIR.to_string() + "/" + filename_stemmed + ".glb";
     if !Path::new(&path_glb).exists() {
         if !Path::new(&path_b3dm).exists() {
-            //println!("{} is not available locally. Fetching it", filename);
+            println!("{} is not available locally. Fetching it", filename);
             let url = TILESERVER_URL.to_string() + filename + API_KEY;
             let was_success = request_and_cache_binary_model_file(client, &url, &path_b3dm);
             if !was_success {
@@ -137,7 +139,7 @@ fn stream_model(mut stream: &TcpStream, client: &Client, filename: &str) {
         println!("Error when flushing"); return;
     }; 
     
-    //println!("Sent {:#?} to Unity", filename);
+    println!("Streamed model {:#?}", filename);
 }
 
 /////// STREAM REQUEST FUNCTIONS ////////
@@ -204,7 +206,34 @@ fn not_found_response(mut stream: &TcpStream) {
     };
 }
 
-/////// CONVERSION FUNCTIONS ////////
+/////// COMMANDLINE FUNCTIONS ////////
+fn get_hostname() -> String {
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(["/C", "hostname -I"])
+            .stdout(Stdio::piped())
+            .output()
+            .expect("Error when querying hostname")
+    } else if cfg!(target_os = "macos") {
+        Command::new("sh")
+            .arg("-c")
+            .arg("ipconfig getifaddr en0")
+            .stdout(Stdio::piped())
+            .output()
+            .expect("Error when querying hostname")
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .arg("hostname -I")
+            .stdout(Stdio::piped())
+            .output()
+            .expect("Error when querying hostname")
+    };
+
+    let result = String::from_utf8(output.stdout).expect("Error when querying hostname");
+    return result.trim().to_string();
+}
+
 fn convert_cmpt_to_glb(filename_stemmed: &str) {
     // npx 3d-tiles-tools cmptToGlb -i ./specs/data/composite.cmpt -o ./output/extracted.glb
     // let cmd = format!("npx 3d-tiles-tools cmptToGlb -i {}/{}.cmpt -o {}/{}.glb", PATH_TILESET_DIR, &filename_stemmed, PATH_GLB_DIR, &filename_stemmed);
