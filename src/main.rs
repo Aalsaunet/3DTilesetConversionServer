@@ -20,10 +20,11 @@ fn main() {
     fs::create_dir_all(PATH_TILESET_DIR).expect(format!("Couldn't create required dir {}", PATH_TILESET_DIR).as_str());
     fs::create_dir_all(PATH_B3DM_DIR).expect(format!("Couldn't create required dir {}", PATH_B3DM_DIR).as_str());
     fs::create_dir_all(PATH_GLB_DIR).expect(format!("Couldn't create required dir {}", PATH_GLB_DIR).as_str());
+    const THREADS_PER_CPU: usize = 6; 
 
     let hostname = format!("{}:7878", get_hostname()); // e.g 192.168.1.2:7878
     let listener = TcpListener::bind(&hostname).expect("Failed to bind TcpListener");
-    let pool = ThreadPool::new(num_cpus::get());
+    let pool = ThreadPool::new(num_cpus::get() * THREADS_PER_CPU);
     println!("Started 3DTiles Conversion Server with {} threads listening on {}...", num_cpus::get(), &hostname);
 
     for stream in listener.incoming() {
