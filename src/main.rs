@@ -3,11 +3,12 @@
 use std::{
     fs, future::Future, io::{prelude::*, Read}, path::Path, process::{Command, Stdio}, str::from_utf8, sync::Arc
 };
-
-use mini_redis::Connection;
+use bytes::{Buf, Bytes};
+use mini_redis::{Connection, Frame};
 use regex::Regex;
 // use reqwest::blocking::Client;
-use std::fs::File;
+use tokio::io::{self, AsyncReadExt};
+use tokio::fs::File;
 // use tileset_conversion_server::ThreadPool;
 // use num_cpus;
 
@@ -165,22 +166,23 @@ impl Handler {
             };
 
             // SERVER SPECIFIC CODE HERE HERE
-            let request_path = match  from_utf8(&frame) {
-                Ok(v) => v,
-                Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); Err(e); },
-            };
+            let request_path = &frame.to_string();
+            // let request_path = match from_utf8() {
+            //     Ok(v) => v,
+            //     Err(e) => {println!("Failed to unwrap request from Unity: {:#?}", e); Err(e); },
+            // };
 
             let re = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
             match re.captures(request_path) {
                 Some(caps) => {
                     if caps.name("tileset").is_some() {
-                        self.stream_tileset(&caps["tileset"])
+                        self.stream_tileset(&caps["tileset"]).await?
                     } 
                     else {
-                        self.stream_model(&caps["model"])
+                        self.stream_model(&caps["model"]).await?
                     }
                 }
-                None => self.not_found_response(),
+                None => self.not_found_response().await?,
             };
         }
 
@@ -188,55 +190,63 @@ impl Handler {
     }
 
     /////// RESPONSE FUNCTIONS ////////
-    async fn stream_tileset(&mut self, filename: &str) {
+    async fn stream_tileset(&mut self, filename: &str) -> crate::Result<()> {
         let tileset_path = PATH_TILESET_DIR.to_string() + "/" + filename;
         let contents: String = 
             if !Path::new(&tileset_path).exists() {
                 println!("{} is not available locally. Fetching it.", filename);
-                let url = TILESERVER_URL.to_string() + filename + API_KEY; 
-                let Ok(c) = request_and_cache_tileset(client, &url, filename) else {
-                    println!("Unable to fetch file {}", &tileset_path);
-                    not_found_response(&stream);
-                    return;
-                }; 
-                c
-            } else {
-                let Ok(c) = fs::read_to_string(&tileset_path) else {
+                let request_url = TILESERVER_URL.to_string() + filename + API_KEY;
+                let response = reqwest::get(request_url).await;
+                let body = response.expect("error").text().await;
+                if let Err(e) = fs::write(format!("{}/{}", PATH_TILESET_DIR, filename), &body.unwrap()) {
                     println!("Unable to read file {}", &tileset_path);
-                    not_found_response(&stream);
-                    return;
-                }; 
-                c
+                    self.not_found_response();
+                    Ok(());
+                };
+                body.unwrap()
+            } else {
+                let mut f = File::open(&tileset_path).await?;
+                let mut buffer = Vec::new();
+                f.read_to_end(&mut buffer).await?;
+                let as_string = from_utf8(&buffer).unwrap();
+                as_string;
             };
 
         let status_line = "HTTP/1.1 200 OK";
         let length: usize = contents.len();
         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-
-        if let Err(e) = stream.write_all(response.as_bytes()) {
-            println!("Error when streaming tileset: {}", e);
-            not_found_response(&stream);
-        }; 
-
-        if let Err(e) = stream.flush() {
-            println!("Error when flushing: {}", e);
-        };
+        
+        self.connection.write_frame(&Frame::Simple(response)); // or just response?
         println!("Streamed tileset {:#?}", filename);
+        Ok(())
     }
 
-    async fn stream_model(&mut self, filename: &str) {
+    async fn stream_model(&mut self, filename: &str) -> crate::Result<()> {
         let filename_stemmed = Path::new(filename).file_stem().unwrap().to_str().unwrap();
         let path_b3dm = PATH_B3DM_DIR.to_string() + "/" + filename_stemmed + ".b3dm";
         let path_glb = PATH_GLB_DIR.to_string() + "/" + filename_stemmed + ".glb";
         if !Path::new(&path_glb).exists() {
             if !Path::new(&path_b3dm).exists() {
                 println!("{} is not available locally. Fetching it.", filename);
-                let url = TILESERVER_URL.to_string() + filename + API_KEY;
-                let was_success = request_and_cache_binary_model_file(client, &url, &path_b3dm);
-                if !was_success {
-                    not_found_response(&stream);
-                    return; 
-                }
+                let request_url = TILESERVER_URL.to_string() + filename + API_KEY;
+                let response = reqwest::get(request_url).await;
+                let body = response.unwrap().bytes();
+
+                let mut file = match File::create(Path::new(&path_b3dm)) {
+                    Ok(file) => file,
+                    Err(_) => {
+                        println!("Unable to create file {}", &path_b3dm);
+                        self.not_found_response();
+                        return;
+                    },
+                };
+        
+                if let Err(e) = file.write_all(&body) {
+                    println!("Error when writing model to file: {}", e);
+                    self.not_found_response();
+                    return;
+                };
+
             }   
             // Convert the model file to a glb file and return it
             if filename.contains("cmpt") { convert_cmpt_to_glb(filename_stemmed); } 
@@ -246,32 +256,18 @@ impl Handler {
         //MIME type: model/gltf-binary or application/octet-stream
         let Ok(contents) = fs::read(&path_glb) else {
             println!("Unable to read file {}", &path_glb);
-            not_found_response(&stream);
-            return;
-        };
-
-        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n", contents.len());
-        
-        if let Err(e) = stream.write_all(response.as_bytes()) {
-            println!("Error when streaming model: {}", e); 
-            not_found_response(&stream);
-            return;
-        }; 
-
-        if let Err(e) = stream.write_all(&contents) {
-            println!("Error when streaming model: {}", e); 
             self.not_found_response();
             return;
         };
 
-        if let Err(_) = stream.flush() {
-            println!("Error when flushing"); return;
-        }; 
-        
-        println!("Streamed model {:#?}", filename);
+        let response = format!("HTTP/1.0 200 OK\r\nContent-Type: model/gltf-binary\r\nContent-Length: {}\r\n\r\n", contents.len());
+        self.connection.write_frame(&Frame::Bulk(Bytes::from_static(response.as_bytes()))); // or just response?
+        self.connection.write_frame(&Frame::Bulk(Bytes::from_static(&contents)));
+        println!("Streamed tileset {:#?}", filename);
+        Ok(())
     }
 
-    async fn not_found_response(&mut self) {
+    async fn not_found_response(&mut self) -> crate::Result<()> {
         // let contents = fs::read_to_string(filename).unwrap();
         let response = format!(
             "{}\r\nContent-Length: {}\r\n\r\n{}",
@@ -280,50 +276,8 @@ impl Handler {
             ""
         );
 
-        self.connection.write_frame(response);
-    }
-
-
-    /////// STREAM REQUEST FUNCTIONS ////////
-    async fn request_and_cache_tileset(&mut self, req_url: &str, file_name: &str) -> Result<String, String> {    
-        let Ok(mut response) = client.get(req_url).send() else {
-            return Err(format!("Failed to fetch from: {}", req_url));
-        };
-
-        let mut body = String::new();
-        if let Err(e) = response.read_to_string(&mut body) {
-            return Err(format!("Error when reading response to string: {}", e));
-        };
-
-        if let Err(e) = fs::write(format!("{}/{}", PATH_TILESET_DIR, file_name), &body) {
-            return Err(format!("Error when writing tileset to file: {}", e));
-        };
-
-        return Ok(body);
-    }
-
-    async fn request_and_cache_binary_model_file(&mut self, req_url: &str, target_file_path: &str) -> bool {
-        let Ok(response) = client.get(req_url).send() else {
-            println!("Failed to fetch from: {}", req_url);
-            return false;
-        };
-
-        let mut file = match File::create(Path::new(&target_file_path)) {
-            Ok(file) => file,
-            Err(_) => return false,
-        };
-
-        let Ok(content) = response.bytes() else {
-            println!("Failed to unwrap bytes from the response:");
-            return false;
-        };
-
-        if let Err(e) = file.write_all(&content) {
-            println!("Error when writing model to file: {}", e);
-            return false;
-        };
-
-        return true;
+        self.connection.write_frame(&Frame::Simple(response));
+        Ok(())
     }
 }
 
@@ -353,6 +307,48 @@ impl Drop for Handler {
 //         None => not_found_response(&stream),
 //     };
 // }
+
+    /////// STREAM REQUEST FUNCTIONS ////////
+    // async fn request_and_cache_tileset(&mut self, req_url: &str, file_name: &str) -> Result<String, String> {    
+    //     let Ok(mut response) = client.get(req_url).send() else {
+    //         return Err(format!("Failed to fetch from: {}", req_url));
+    //     };
+
+    //     let mut body = String::new();
+    //     if let Err(e) = response.read_to_string(&mut body) {
+    //         return Err(format!("Error when reading response to string: {}", e));
+    //     };
+
+    //     if let Err(e) = fs::write(format!("{}/{}", PATH_TILESET_DIR, file_name), &body) {
+    //         return Err(format!("Error when writing tileset to file: {}", e));
+    //     };
+
+    //     return Ok(body);
+    // }
+
+    // async fn request_and_cache_binary_model_file(&mut self, req_url: &str, target_file_path: &str) -> bool {
+    //     let Ok(response) = client.get(req_url).send() else {
+    //         println!("Failed to fetch from: {}", req_url);
+    //         return false;
+    //     };
+
+    //     let mut file = match File::create(Path::new(&target_file_path)) {
+    //         Ok(file) => file,
+    //         Err(_) => return false,
+    //     };
+
+    //     let Ok(content) = response.bytes() else {
+    //         println!("Failed to unwrap bytes from the response:");
+    //         return false;
+    //     };
+
+    //     if let Err(e) = file.write_all(&content) {
+    //         println!("Error when writing model to file: {}", e);
+    //         return false;
+    //     };
+
+    //     return true;
+    // }
 
 
 
