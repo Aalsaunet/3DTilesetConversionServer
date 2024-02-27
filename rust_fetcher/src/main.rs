@@ -1,9 +1,8 @@
 use std::{
-    env, ffi::OsStr, fs, io::{prelude::*, Read}, net::{TcpListener, TcpStream}, path::{Path, PathBuf}, process::{Command, Stdio}, str::from_utf8
+    fs, io::{prelude::*, Read}, path::Path, process::Command
 };
 
 use regex::Regex;
-use reqwest::blocking::Client;
 use std::fs::File;
 use rust_fetcher::ThreadPool;
 use num_cpus;
@@ -24,33 +23,32 @@ fn main() {
     
     let thread_count = num_cpus::get();
     let thread_pool = ThreadPool::new(thread_count);
-    let client = reqwest::blocking::Client::new();
     let root_filename = "tileset.json";
-    let Ok(root_body) = handle_tileset(client, &root_filename) else {
-        println!("Unable to fetch file {}", &root_filename);
+    let Ok(root_body) = handle_tileset(root_filename.to_string()) else {
+        println!("Unable to fetch file {}", root_filename);
         return;
     };
 
-    // Fetch all referenced tilesets recursively
-    let reg_expr = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
-    fetch_tileset_and_models_recursively(client, &thread_pool, &reg_expr, &root_body);
+    // Fetch all referenced tilesets recursively 
+    fetch_tileset_and_models_recursively(thread_pool, root_body);
     println!("Fetched all tilesets and referenced models");
 }
 
 /////// FETCH FUNCTIONS ////////
-fn fetch_tileset_and_models_recursively(client: Client, thread_pool: &ThreadPool, reg_expr: &Regex, body: &str) {
+fn fetch_tileset_and_models_recursively(thread_pool: ThreadPool, body: String) {
+    let reg_expr = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
     match reg_expr.captures(&body) {
         Some(caps) => {
             if caps.name("tileset").is_some() {
-                thread_pool.execute(|| {
-                    if let Ok(content) = handle_tileset(client, &caps["tileset"]) {
-                        fetch_tileset_and_models_recursively(client, thread_pool, reg_expr, body)
+                thread_pool.execute(move || {
+                    if let Ok(content) = handle_tileset(caps["tileset"].to_string()) {
+                        fetch_tileset_and_models_recursively(thread_pool, content)
                     }
                 }); 
             }
             else {
                 thread_pool.execute(|| {
-                    handle_model(client, &caps["model"])
+                    handle_model(&caps["model"])
                 });    
             }
         }
@@ -58,12 +56,12 @@ fn fetch_tileset_and_models_recursively(client: Client, thread_pool: &ThreadPool
     };
 }
 
-fn handle_tileset(client: Client, filename: &str) -> Result<String, String> {
-    let tileset_path = PATH_TILESET_DIR.to_string() + "/" + filename;
+fn handle_tileset(filename: String) -> Result<String, String> {
+    let tileset_path = PATH_TILESET_DIR.to_string() + "/" + &filename;
     if !Path::new(&tileset_path).exists() {
         println!("{} is not available locally. Fetching it.", filename);
-        let url = TILESERVER_URL.to_string() + filename + API_KEY; 
-        return request_and_cache_tileset(client, &url, filename);
+        let url = TILESERVER_URL.to_string() + &filename + API_KEY; 
+        return request_and_cache_tileset(&url, &filename);
     } else {
         let Ok(content) = fs::read_to_string(&tileset_path) else {
             return Err(format!("Unable to read file {}", &filename));
@@ -72,8 +70,8 @@ fn handle_tileset(client: Client, filename: &str) -> Result<String, String> {
     };
 }
 
-fn request_and_cache_tileset(client: Client, req_url: &str, file_name: &str) -> Result<String, String> {    
-    let Ok(mut response) = client.get(req_url).send() else {
+fn request_and_cache_tileset(req_url: &str, file_name: &str) -> Result<String, String> {    
+    let Ok(mut response) = reqwest::blocking::get(req_url) else {
         return Err(format!("Failed to fetch from: {}", req_url));
     };
 
@@ -89,7 +87,7 @@ fn request_and_cache_tileset(client: Client, req_url: &str, file_name: &str) -> 
     return Ok(body);
 }
 
-fn handle_model(client: Client, filename: &str) {
+fn handle_model(filename: &str) {
     let filename_stemmed = Path::new(filename).file_stem().unwrap().to_str().unwrap();
     let path_b3dm = PATH_B3DM_DIR.to_string() + "/" + filename_stemmed + ".b3dm";
     let path_glb = PATH_GLB_DIR.to_string() + "/" + filename_stemmed + ".glb";
@@ -97,7 +95,7 @@ fn handle_model(client: Client, filename: &str) {
         if !Path::new(&path_b3dm).exists() {
             println!("{} is not available locally. Fetching it.", filename);
             let url = TILESERVER_URL.to_string() + filename + API_KEY;
-            let was_success = request_and_cache_binary_model_file(client, &url, &path_b3dm);
+            let was_success = request_and_cache_binary_model_file( &url, &path_b3dm);
             if !was_success {
                 return; 
             }
@@ -108,8 +106,8 @@ fn handle_model(client: Client, filename: &str) {
     }
 }
 
-fn request_and_cache_binary_model_file(client: Client, req_url: &str, target_file_path: &str) -> bool {
-    let Ok(response) = client.get(req_url).send() else {
+fn request_and_cache_binary_model_file(req_url: &str, target_file_path: &str) -> bool {
+    let Ok(response) = reqwest::blocking::get(req_url) else {
         println!("Failed to fetch from: {}", req_url);
         return false;
     };

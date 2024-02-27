@@ -11,8 +11,8 @@ use num_cpus;
 const TILESERVER_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
 const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
-const PATH_TILESET_DIR: &str = "tileset_cache/b3dms"; //join(PathBuf::new("tileset_cache/tilesets"));
-const PATH_B3DM_DIR: &str = "tileset_cache/b3dms"; //join(PathBuf::new("tileset_cache/tilesets"));
+const PATH_TILESET_DIR: &str = "tileset_cache/tilesets";
+const PATH_B3DM_DIR: &str = "tileset_cache/b3dms";
 const PATH_GLB_DIR: &str = "tileset_cache/glbs";
 
 fn main() {    
