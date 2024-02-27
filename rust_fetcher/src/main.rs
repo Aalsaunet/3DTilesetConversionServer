@@ -35,35 +35,18 @@ fn main() {
 
 /////// FETCH FUNCTIONS ////////
 fn fetch_tileset_and_models_recursively(body: &str) { //thread_pool: &ThreadPool, 
-    let reg_expr = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
-    match reg_expr.captures(body) {
-        Some(caps) => {
-            if caps.name("tileset").is_some() {
-                if let Ok(content) = handle_tileset(&caps["tileset"]) {
-                    fetch_tileset_and_models_recursively(&content);           
-                } 
+    let re = Regex::new(r"(?<match>[0-9]*tileset.json|[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
+    let matches: Vec<_> = re.find_iter(&body).map(|m| m.as_str()).collect();
+    for m in matches.iter() {
+        if m.contains("tileset") {
+            if let Ok(content) = handle_tileset(m) {
+                fetch_tileset_and_models_recursively(&content);           
             }
-            else {
-                handle_model(&caps["model"]);    
-            }
+        } else {
+            handle_model(m);
         }
-        None => return,
-    };
+    }
 }
-
-// if caps.name("tileset").is_some() {
-//     if let Ok(content) = handle_tileset(&caps["tileset"]) {
-//         let pool_copy: &ThreadPool = thread_pool.clone();
-//         pool_copy.execute(|| {
-//             fetch_tileset_and_models_recursively(thread_pool, &content)
-//         });            
-//     } 
-// }
-// else {
-//     thread_pool.execute(|| {
-//         handle_model(&caps["model"])
-//     });    
-// }
 
 fn handle_tileset(filename: &str) -> Result<String, String> {
     let tileset_path = PATH_TILESET_DIR.to_string() + "/" + filename;
