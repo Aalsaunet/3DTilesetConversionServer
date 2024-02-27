@@ -4,10 +4,9 @@ use std::{
 
 use regex::Regex;
 use std::fs::File;
-use rust_fetcher::ThreadPool;
-use num_cpus;
+// use rust_fetcher::ThreadPool;
+// use num_cpus;
 
-const TILESET_URL_FULL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/tileset.json?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 const TILESERVER_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
 const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
@@ -21,50 +20,60 @@ fn main() {
     fs::create_dir_all(PATH_B3DM_DIR).expect(format!("Couldn't create required dir {}", PATH_B3DM_DIR).as_str());
     fs::create_dir_all(PATH_GLB_DIR).expect(format!("Couldn't create required dir {}", PATH_GLB_DIR).as_str());
     
-    let thread_count = num_cpus::get();
-    let thread_pool = ThreadPool::new(thread_count);
+    // let thread_count = num_cpus::get();
+    // let thread_pool = ThreadPool::new(thread_count);
     let root_filename = "tileset.json";
-    let Ok(root_body) = handle_tileset(root_filename.to_string()) else {
+    let Ok(root_body) = handle_tileset(root_filename) else {
         println!("Unable to fetch file {}", root_filename);
         return;
     };
 
     // Fetch all referenced tilesets recursively 
-    fetch_tileset_and_models_recursively(thread_pool, root_body);
+    fetch_tileset_and_models_recursively(&root_body); // &thread_pool,
     println!("Fetched all tilesets and referenced models");
 }
 
 /////// FETCH FUNCTIONS ////////
-fn fetch_tileset_and_models_recursively(thread_pool: ThreadPool, body: String) {
+fn fetch_tileset_and_models_recursively(body: &str) { //thread_pool: &ThreadPool, 
     let reg_expr = Regex::new(r"(?<tileset>[0-9]*tileset.json)|(?<model>[0-9]+model.cmpt|[0-9]+model.b3dm|[0-9]+model)").unwrap();
-    match reg_expr.captures(&body) {
+    match reg_expr.captures(body) {
         Some(caps) => {
             if caps.name("tileset").is_some() {
-                thread_pool.execute(move || {
-                    if let Ok(content) = handle_tileset(caps["tileset"].to_string()) {
-                        fetch_tileset_and_models_recursively(thread_pool, content)
-                    }
-                }); 
+                if let Ok(content) = handle_tileset(&caps["tileset"]) {
+                    fetch_tileset_and_models_recursively(&content);           
+                } 
             }
             else {
-                thread_pool.execute(|| {
-                    handle_model(&caps["model"])
-                });    
+                handle_model(&caps["model"]);    
             }
         }
         None => return,
     };
 }
 
-fn handle_tileset(filename: String) -> Result<String, String> {
-    let tileset_path = PATH_TILESET_DIR.to_string() + "/" + &filename;
+// if caps.name("tileset").is_some() {
+//     if let Ok(content) = handle_tileset(&caps["tileset"]) {
+//         let pool_copy: &ThreadPool = thread_pool.clone();
+//         pool_copy.execute(|| {
+//             fetch_tileset_and_models_recursively(thread_pool, &content)
+//         });            
+//     } 
+// }
+// else {
+//     thread_pool.execute(|| {
+//         handle_model(&caps["model"])
+//     });    
+// }
+
+fn handle_tileset(filename: &str) -> Result<String, String> {
+    let tileset_path = PATH_TILESET_DIR.to_string() + "/" + filename;
     if !Path::new(&tileset_path).exists() {
         println!("{} is not available locally. Fetching it.", filename);
-        let url = TILESERVER_URL.to_string() + &filename + API_KEY; 
-        return request_and_cache_tileset(&url, &filename);
+        let url = TILESERVER_URL.to_string() + filename + API_KEY; 
+        return request_and_cache_tileset(&url, filename);
     } else {
         let Ok(content) = fs::read_to_string(&tileset_path) else {
-            return Err(format!("Unable to read file {}", &filename));
+            return Err(format!("Unable to read file {}", filename));
         }; 
         return Ok(content);
     };
