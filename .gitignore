@@ -1,9 +1,12 @@
 /target
 /tmp
 /node_modules
-rust_implementation/target
-rust_implementation/tmp
-rust_implementation/node_modules
+rust_server/target
+rust_server/tmp
+rust_server/node_modules
+rust_fetcher/target
+rust_fetcher/tmp
+rust_fetcher/node_modules
 tileset_cache
 node_modules
 .DS_Store

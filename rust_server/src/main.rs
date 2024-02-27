@@ -1,5 +1,5 @@
 use std::{
-    fs, io::{prelude::*, Read}, net::{TcpListener, TcpStream}, path::Path, process::{Command, Stdio}, str::from_utf8,
+    env, ffi::OsStr, fs, io::{prelude::*, Read}, net::{TcpListener, TcpStream}, path::{Path, PathBuf}, process::{Command, Stdio}, str::from_utf8
 };
 
 use regex::Regex;
@@ -11,22 +11,21 @@ use num_cpus;
 const TILESERVER_URL: &str = "https://waapi.webatlas.no/3d-tiles/tileserver.fcgi/";
 const API_KEY: &str = "?api_key=DB124B20-9D21-4647-B65A-16C651553E48";
 
-const PATH_TILESET_DIR: &str = "tmp/tilesets";
-const PATH_B3DM_DIR: &str = "tmp/b3dms";
-const PATH_GLB_DIR: &str = "tmp/glbs";
+const PATH_TILESET_DIR: &str = "tileset_cache/b3dms"; //join(PathBuf::new("tileset_cache/tilesets"));
+const PATH_B3DM_DIR: &str = "tileset_cache/b3dms"; //join(PathBuf::new("tileset_cache/tilesets"));
+const PATH_GLB_DIR: &str = "tileset_cache/glbs";
 
-const THREADS_PER_CPU: usize = 6; 
-
-fn main() {
+fn main() {    
     // Ensure the required directories exists
     fs::create_dir_all(PATH_TILESET_DIR).expect(format!("Couldn't create required dir {}", PATH_TILESET_DIR).as_str());
     fs::create_dir_all(PATH_B3DM_DIR).expect(format!("Couldn't create required dir {}", PATH_B3DM_DIR).as_str());
     fs::create_dir_all(PATH_GLB_DIR).expect(format!("Couldn't create required dir {}", PATH_GLB_DIR).as_str());
     
-    let thread_count = num_cpus::get() * THREADS_PER_CPU;
+    let thread_count = num_cpus::get();
     let pool = ThreadPool::new(thread_count);
     let hostname = format!("{}:7878", get_hostname()); // e.g 192.168.1.2:7878
     let listener = TcpListener::bind(&hostname).expect("Failed to bind TcpListener");
+
     println!("Started 3DTiles Conversion Server with {} threads listening on {}...", thread_count, &hostname);
 
     for stream in listener.incoming() {
