@@ -1,5 +1,9 @@
 /target
 /tmp
 /node_modules
+rust_implementation/target
+rust_implementation/tmp
+rust_implementation/node_modules
+tileset_cache
 node_modules
 .DS_Store
